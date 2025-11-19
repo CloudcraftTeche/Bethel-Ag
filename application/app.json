@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "Bethel AG ",
-    "slug": "bethel-ag-dubai",
-    "scheme": "bethelagdubai",
+    "slug": "bethel-ag",
+    "scheme": "bethelag",
     "version": "1.0.0",
     "runtimeVersion": {
       "policy": "appVersion"
@@ -33,7 +33,7 @@
       ]
     ],
     "splash": {
-      "image": "./assets/icon.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#1a1a2e"
     },
@@ -62,8 +62,8 @@
         ]
       },
       "splash": {
-        "image": "./assets/icon.png",
-        "tabletImage": "./assets/icon.png",
+        "image": "./assets/logo.png",
+        "tabletImage": "./assets/logo.png",
         "resizeMode": "contain",
         "backgroundColor": "#1a1a2e"
       },
@@ -113,7 +113,7 @@
         }
       ],
       "splash": {
-        "image": "./assets/icon.png",
+        "image": "./assets/logo.png",
         "resizeMode": "contain",
         "backgroundColor": "#1a1a2e"
       }
@@ -131,14 +131,14 @@
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/a168b51b-7966-4490-8d69-8862b05393d4"
+      "url": "https://u.expo.dev/b889fa76-70ad-4a1a-9491-ccf4b9244c3f"
     },
     "description": "Bethel AG Dubai - A modern platform for community and commerce.",
     "extra": {
       "eas": {
-        "projectId": "a168b51b-7966-4490-8d69-8862b05393d4"
+        "projectId": "b889fa76-70ad-4a1a-9491-ccf4b9244c3f"
       },
-      "apiUrl": "https://bethel-ag-dubai.onrender.com/api",
+      "apiUrl": "https://bethel-ag.onrender.com/api",
       "appVersion": "1.0.0"
     },
     "owner": "codewithdarshan"
