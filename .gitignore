@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+application/node_modules/
+server/node_modules/
+
+# Expo
+application/.expo/
+application/.expo-shared/
+
+# Secrets
+secrets/
+*.pem
+*.p8
+*.p12
+*.key
+google-play-service-account.json
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Build
+application/android/
+application/ios/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*

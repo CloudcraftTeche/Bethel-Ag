@@ -1,0 +1,157 @@
+name: EAS Build & Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'application/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'application/**'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+      profile:
+        description: 'Build profile'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+
+jobs:
+  build:
+    name: EAS Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./application
+    
+    steps:
+      - name: 🏗 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: npm
+          cache-dependency-path: application/package-lock.json
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🚀 Build Android (Preview)
+        if: |
+          (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
+          (github.event_name == 'workflow_dispatch' && 
+           (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android'))
+        run: |
+          PROFILE=${{ github.event.inputs.profile || 'preview' }}
+          eas build --platform android --profile $PROFILE --non-interactive --no-wait
+
+      - name: 🚀 Build iOS (Preview)
+        if: |
+          (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
+          (github.event_name == 'workflow_dispatch' && 
+           (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios'))
+        run: |
+          PROFILE=${{ github.event.inputs.profile || 'preview' }}
+          eas build --platform ios --profile $PROFILE --non-interactive --no-wait
+
+      - name: 🚀 Build Production (Main branch)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          eas build --platform all --profile production --non-interactive --no-wait
+
+  submit:
+    name: Submit to Stores
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: ./application
+    
+    steps:
+      - name: 🏗 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: npm
+          cache-dependency-path: application/package-lock.json
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 📱 Submit to App Store
+        run: |
+          eas submit --platform ios --latest --non-interactive
+        continue-on-error: true
+
+      - name: 📱 Submit to Google Play
+        run: |
+          eas submit --platform android --latest --non-interactive
+        continue-on-error: true
+
+  update:
+    name: Publish OTA Update
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: ./application
+    
+    steps:
+      - name: 🏗 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: npm
+          cache-dependency-path: application/package-lock.json
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🚀 Publish Update
+        run: |
+          eas update --branch preview --message "${{ github.event.head_commit.message }}"

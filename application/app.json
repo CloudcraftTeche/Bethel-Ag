@@ -1,0 +1,146 @@
+{
+  "expo": {
+    "name": "Bethel AG ",
+    "slug": "bethel-ag-dubai",
+    "scheme": "bethelagdubai",
+    "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#1a1a2e",
+    "primaryColor": "#667eea",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "jsEngine": "hermes",
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification.png",
+          "color": "#667eea"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera"
+        }
+      ]
+    ],
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a2e"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bethelag.dubai",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "UIRequiredDeviceCapabilities": [
+          "armv7"
+        ],
+        "NSCameraUsageDescription": "This app uses your camera to capture images for profile and content creation.",
+        "NSPhotoLibraryUsageDescription": "This app uses your photo library to upload images.",
+        "NSPhotoLibraryAddOnlyUsageDescription": "This app needs to save photos to your library.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to provide location-based services.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to provide location-based services.",
+        "NSContactsUsageDescription": "This app uses your contacts to help you connect with others.",
+        "NSUserTrackingUsageDescription": "This app uses tracking to provide you with a better experience.",
+        "NSLocalNetworkUsageDescription": "This app uses local network to enhance your experience.",
+        "NSBonjourServiceTypes": [
+          "_http._tcp",
+          "_https._tcp"
+        ]
+      },
+      "splash": {
+        "image": "./assets/icon.png",
+        "tabletImage": "./assets/icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#1a1a2e"
+      },
+      "entitlements": {
+        "com.apple.developer.associated-domains": [
+          "applinks:bethel-ag.com",
+          "webcredentials:bethel-ag.com"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#1a1a2e"
+      },
+      "enableProguardInReleaseBuilds": true,
+      "enableShrinkResources": true,
+      "package": "com.bethelag.dubai",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.READ_CONTACTS",
+        "android.permission.INTERNET",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "bethel-ag.com"
+            },
+            {
+              "scheme": "bethelagdubai"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
+      "splash": {
+        "image": "./assets/icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#1a1a2e"
+      }
+    },
+    "web": {
+      "favicon": "./assets/icon.png",
+      "name": "Bethel AG Dubai",
+      "shortName": "Bethel AG",
+      "theme_color": "#667eea",
+      "background_color": "#1a1a2e",
+      "display": "standalone",
+      "scope": "/",
+      "start_url": "/",
+      "orientation": "portrait-primary"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/a168b51b-7966-4490-8d69-8862b05393d4"
+    },
+    "description": "Bethel AG Dubai - A modern platform for community and commerce.",
+    "extra": {
+      "eas": {
+        "projectId": "a168b51b-7966-4490-8d69-8862b05393d4"
+      },
+      "apiUrl": "https://bethel-ag-dubai.onrender.com/api",
+      "appVersion": "1.0.0"
+    },
+    "owner": "codewithdarshan"
+  }
+}
