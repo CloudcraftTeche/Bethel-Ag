@@ -72,6 +72,7 @@ export default function VerifyOTPScreen() {
 
     setLoading(true);
     try {
+      
       const response = await apiService.verifyOTP(email as string, otpCode);
       
       Alert.alert(
@@ -81,7 +82,7 @@ export default function VerifyOTPScreen() {
           {
             text: 'OK',
             onPress: () => router.push({
-              pathname: '/(auth)/reset-password-new',
+              pathname: '/(auth)/reset-password',
               params: { resetToken: response.data.resetToken }
             })
           }

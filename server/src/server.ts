@@ -13,7 +13,7 @@ import contactRoutes from './routes/contacts';
 import groupRoutes from './routes/groups';
 import eventRoutes from './routes/events';
 import notificationRoutes from './routes/notifications';
-
+import uploadRoutes from "./routes/upload"
 dotenv.config();
 
 const app = express();
@@ -63,6 +63,8 @@ app.use('/api/contacts', contactRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use("/api/upload", uploadRoutes);
+
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });

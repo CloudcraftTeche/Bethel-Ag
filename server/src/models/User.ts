@@ -15,6 +15,7 @@ export interface IUser extends Document {
   nativePlace?: string;
   church?: string;
   avatar?: string;
+  photos?: string[];
   pushTokens?: Array<{ token: string; deviceId: string }>;
   resetPasswordOTP?: string;
   resetPasswordOTPExpire?: Date;
@@ -38,6 +39,16 @@ const userSchema = new Schema<IUser>(
     nativePlace: String,
     church: String,
     avatar: String,
+    photos: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: function(v: string[]) {
+          return v.length <= 4; 
+        },
+        message: 'You can only upload up to 4 profile photos'
+      }
+    },
     pushTokens: [{
       token: String,
       deviceId: String,

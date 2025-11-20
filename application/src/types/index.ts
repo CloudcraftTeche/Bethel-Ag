@@ -12,6 +12,7 @@ export interface User {
   nativePlace?: string;
   church?: string;
   avatar?: string;
+   photos?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,6 +62,7 @@ export interface AuthResponse {
 }
 
 export interface ApiResponse<T = any> {
+  url(url: any): unknown;
   success: boolean;
   data?: T;
   message?: string;
