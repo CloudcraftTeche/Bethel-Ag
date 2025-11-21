@@ -1,18 +1,33 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-import { Event } from '@/models/Event';
-
+import { Event } from '../models/Event';
+import { deleteFromCloudinary } from '../config/cloudinary';
 
 export const uploadAvatarHandler = async (req: Request, res: Response) => {
   try {
+    console.log('Upload avatar request received');
+    console.log('File:', req.file);
+    console.log('Body:', req.body);
+    
     if (!req.file) {
+      console.error('No file in request');
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
     const userId = (req as any).user.userId;
-    const avatarUrl = req.file.path;
+    const avatarUrl = (req.file as any).path; 
 
-    const user = await User.findByIdAndUpdate(
+    console.log('Avatar URL from Cloudinary:', avatarUrl);
+
+    const user = await User.findById(userId);
+    if (user?.avatar) {
+      try {
+        await deleteFromCloudinary(user.avatar);
+      } catch (error) {
+        console.error('Failed to delete old avatar:', error);
+      }
+    }
+    const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: { avatar: avatarUrl } },
       { new: true }
@@ -23,7 +38,7 @@ export const uploadAvatarHandler = async (req: Request, res: Response) => {
       message: 'Avatar uploaded successfully',
       data: {
         url: avatarUrl,
-        user: user,
+        user: updatedUser,
       },
     });
   } catch (error) {
@@ -38,7 +53,7 @@ export const uploadPhotosHandler = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'No files uploaded' });
     }
 
-    const photoUrls = req.files.map((file: Express.Multer.File) => file.path);
+    const photoUrls = req.files.map((file: any) => file.path);
 
     res.json({
       success: true,
@@ -59,17 +74,26 @@ export const uploadEventImageHandler = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const imageUrl = req.file.path;
+    const imageUrl = (req.file as any).path;
     const { eventId } = req.body;
 
     if (eventId) {
-      const event = await Event.findByIdAndUpdate(
+      const event = await Event.findById(eventId);
+      if (event?.image) {
+        try {
+          await deleteFromCloudinary(event.image);
+        } catch (error) {
+          console.error('Failed to delete old event image:', error);
+        }
+      }
+
+      const updatedEvent = await Event.findByIdAndUpdate(
         eventId,
         { $set: { image: imageUrl } },
         { new: true }
       );
 
-      if (!event) {
+      if (!updatedEvent) {
         return res.status(404).json({ error: 'Event not found' });
       }
     }
@@ -86,4 +110,3 @@ export const uploadEventImageHandler = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to upload event image' });
   }
 };
-

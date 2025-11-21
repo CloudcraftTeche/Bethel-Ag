@@ -1,12 +1,10 @@
 import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import dotenv from 'dotenv';
 
-const uploadPath = 'uploads';
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath);
-}
+dotenv.config();
+
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -14,20 +12,43 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadPath);
-  },
-
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = file.originalname.replace(ext, "");
-    cb(null, `${Date.now()}-${name}${ext}`);
+const avatarStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: 'avatars',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+      transformation: [{ width: 500, height: 500, crop: 'fill', quality: 'auto' }],
+      public_id: `avatar_${Date.now()}`,
+    };
   },
 });
 
-const fileFilter = (req: any, file: any, cb: any) => {
+const photoStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: 'profile-photos',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+      transformation: [{ width: 1000, height: 1000, crop: 'limit', quality: 'auto' }],
+      public_id: `photo_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+    };
+  },
+});
+
+const eventStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: 'events',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+      transformation: [{ width: 1200, height: 800, crop: 'limit', quality: 'auto' }],
+      public_id: `event_${Date.now()}`,
+    };
+  },
+});
+
+const imageFileFilter = (req: any, file: any, cb: any) => {
   const allowedMimes = [
     'image/jpeg',
     'image/jpg',
@@ -36,61 +57,43 @@ const fileFilter = (req: any, file: any, cb: any) => {
     'image/webp',
   ];
 
-  if (allowedMimes.includes(file.mimetype)) cb(null, true);
-  else cb(new Error('Invalid file type'), false);
-};
-
-
-
-export const uploadAvatar = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
-}).single('avatar');
-
-export const uploadProfilePhotos = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
-}).array('photos', 4);
-
-export const uploadEventImage = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
-}).single('image');
-
-
-
-export const uploadToCloudinary = async (filePath: string, folder: string) => {
-  try {
-    const result = await cloudinary.uploader.upload(filePath, {
-      folder,
-      quality: 'auto',
-      fetch_format: 'auto',
-    });
-
-    fs.unlinkSync(filePath);
-    return result.secure_url;
-  } catch (err) {
-    console.error("Cloudinary Upload Error:", err);
-    throw err;
+  if (allowedMimes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.'), false);
   }
 };
 
-export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
+export const uploadAvatar = multer({
+  storage: avatarStorage,
+  fileFilter: imageFileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
+
+export const uploadProfilePhotos = multer({
+  storage: photoStorage,
+  fileFilter: imageFileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, 
+});
+
+export const uploadEventImage = multer({
+  storage: eventStorage,
+  fileFilter: imageFileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, 
+});
+
+export const deleteFromCloudinary = async (imageUrl: string): Promise<void> => {
   try {
+    const parts = imageUrl.split('/');
+    const filename = parts[parts.length - 1].split('.')[0];
+    const folder = parts[parts.length - 2];
+    const publicId = `${folder}/${filename}`;
+    
     await cloudinary.uploader.destroy(publicId);
   } catch (error) {
     console.error('Cloudinary delete error:', error);
     throw error;
   }
-};
-
-export const extractPublicId = (url: string): string => {
-  const parts = url.split('/');
-  const filename = parts[parts.length - 1];
-  return filename.split('.')[0];
 };
 
 export default cloudinary;

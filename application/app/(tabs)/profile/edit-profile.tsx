@@ -9,15 +9,15 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import {Image} from 'expo-image';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import apiService from '../../../src/services/api';
+import imageUploadService from '../../../src/services/imageUpload';
 import { useTheme } from '../../../src/context/ThemeContext';
 
 export default function EditProfileScreen() {
@@ -25,6 +25,8 @@ export default function EditProfileScreen() {
   const { theme, colors } = useTheme();
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [formData, setFormData] = useState({
@@ -52,53 +54,100 @@ export default function EditProfileScreen() {
       if (profile.avatar) {
         setAvatarUri(profile.avatar);
       }
+      if (profile.photos && Array.isArray(profile.photos)) {
+        setPhotos(profile.photos);
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
+      Alert.alert('Error', 'Failed to load profile');
     } finally {
       setLoadingProfile(false);
     }
   };
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please grant camera roll permissions');
-      return;
-    }
+  const pickAndUploadAvatar = async () => {
+    try {
+      setUploadingAvatar(true);
+      
+      const imageUri = await imageUploadService.pickImage();
+      if (!imageUri) {
+        setUploadingAvatar(false);
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+      setAvatarUri(imageUri);
 
-    if (!result.canceled) {
-      setAvatarUri(result.assets[0].uri);
+      const cloudinaryUrl = await imageUploadService.uploadAvatar(imageUri);
+      
+      if (cloudinaryUrl) {
+        setAvatarUri(cloudinaryUrl);
+        Alert.alert('Success', 'Avatar uploaded successfully');
+      } else {
+        const profile = await apiService.getProfile();
+        setAvatarUri(profile.avatar || null);
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      Alert.alert('Error', 'Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
-  const pickPhotos = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please grant camera roll permissions');
-      return;
-    }
+  const pickAndUploadPhotos = async () => {
+    try {
+      setUploadingPhotos(true);
+      
+      const remainingSlots = 4 - photos.length;
+      if (remainingSlots <= 0) {
+        Alert.alert('Limit Reached', 'You can only upload up to 4 photos');
+        setUploadingPhotos(false);
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      quality: 0.8,
-    });
+      const imageUris = await imageUploadService.pickMultipleImages(remainingSlots);
+      if (imageUris.length === 0) {
+        setUploadingPhotos(false);
+        return;
+      }
 
-    if (!result.canceled) {
-      const newPhotos = result.assets.map((asset) => asset.uri);
-      setPhotos((prev) => [...prev, ...newPhotos].slice(0, 4));
+      setPhotos((prev) => [...prev, ...imageUris]);
+
+      const cloudinaryUrls = await imageUploadService.uploadPhotos(imageUris);
+      
+      if (cloudinaryUrls.length > 0) {
+        setPhotos((prev) => {
+          const newPhotos = [...prev];
+          newPhotos.splice(prev.length - imageUris.length, imageUris.length);
+          return [...newPhotos, ...cloudinaryUrls];
+        });
+        Alert.alert('Success', `${cloudinaryUrls.length} photo(s) uploaded successfully`);
+      } else {
+        setPhotos((prev) => prev.slice(0, prev.length - imageUris.length));
+      }
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+      Alert.alert('Error', 'Failed to upload photos');
+    } finally {
+      setUploadingPhotos(false);
     }
   };
 
   const removePhoto = (index: number) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    Alert.alert(
+      'Remove Photo',
+      'Are you sure you want to remove this photo?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            setPhotos((prev) => prev.filter((_, i) => i !== index));
+          },
+        },
+      ]
+    );
   };
 
   const handleSave = async () => {
@@ -116,6 +165,7 @@ export default function EditProfileScreen() {
         address: formData.location,
         nativePlace: formData.mapsLink,
         avatar: avatarUri || undefined,
+        photos: photos.length > 0 ? photos : undefined,
       });
       Alert.alert('Success', 'Profile updated successfully', [
         { text: 'OK', onPress: () => router.back() },
@@ -209,15 +259,28 @@ export default function EditProfileScreen() {
                     <Ionicons name="person" size={48} color={colors.textSecondary} />
                   </BlurView>
                 )}
+                {uploadingAvatar && (
+                  <View style={styles.uploadingOverlay}>
+                    <ActivityIndicator size="large" color="#FFFFFF" />
+                  </View>
+                )}
               </View>
-              <TouchableOpacity style={styles.editAvatarButton} onPress={pickImage}>
+              <TouchableOpacity
+                style={styles.editAvatarButton}
+                onPress={pickAndUploadAvatar}
+                disabled={uploadingAvatar}
+              >
                 <LinearGradient
                   colors={isDark ? ['#0A84FF', '#0066CC'] : ['#667eea', '#764ba2']}
                   style={styles.editAvatarGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Ionicons name="camera" size={20} color="#FFFFFF" />
+                  {uploadingAvatar ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Ionicons name="camera" size={20} color="#FFFFFF" />
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -364,7 +427,10 @@ export default function EditProfileScreen() {
                 </View>
               ))}
               {photos.length < 4 && (
-                <TouchableOpacity onPress={pickPhotos}>
+                <TouchableOpacity
+                  onPress={pickAndUploadPhotos}
+                  disabled={uploadingPhotos}
+                >
                   <BlurView
                     intensity={isDark ? 15 : 25}
                     tint={isDark ? 'dark' : 'light'}
@@ -377,10 +443,16 @@ export default function EditProfileScreen() {
                       }
                     ]}
                   >
-                    <Ionicons name="camera-outline" size={32} color={colors.textSecondary} />
-                    <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
-                      Add Photo
-                    </Text>
+                    {uploadingPhotos ? (
+                      <ActivityIndicator size="small" color={colors.textSecondary} />
+                    ) : (
+                      <>
+                        <Ionicons name="camera-outline" size={32} color={colors.textSecondary} />
+                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
+                          Add Photo
+                        </Text>
+                      </>
+                    )}
                   </BlurView>
                 </TouchableOpacity>
               )}
@@ -470,14 +542,6 @@ const styles = StyleSheet.create({
   avatarContainer: {
     position: 'relative',
   },
-  avatarRing: {
-    position: 'absolute',
-    width: 136,
-    height: 136,
-    borderRadius: 68,
-    top: -8,
-    left: -8,
-  },
   avatarInner: {
     width: 120,
     height: 120,
@@ -495,6 +559,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+  },
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   editAvatarButton: {
     position: 'absolute',

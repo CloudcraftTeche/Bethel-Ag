@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
 
+dotenv.config();
 interface EmailOptions {
   to: string;
   subject: string;
