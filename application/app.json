@@ -8,7 +8,7 @@
       "policy": "appVersion"
     },
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logoicon.png",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#1a1a2e",
     "primaryColor": "#667eea",
@@ -76,7 +76,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/logoicon.png",
         "backgroundColor": "#1a1a2e"
       },
       "enableProguardInReleaseBuilds": true,
@@ -131,12 +131,12 @@
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/b889fa76-70ad-4a1a-9491-ccf4b9244c3f"
+      "url": "https://u.expo.dev/6a3cdb1e-7b5c-4d1f-b3d4-afe464f4cf5e"
     },
     "description": "Bethel AG Dubai - A modern platform for community and commerce.",
     "extra": {
       "eas": {
-        "projectId": "b889fa76-70ad-4a1a-9491-ccf4b9244c3f"
+        "projectId": "6a3cdb1e-7b5c-4d1f-b3d4-afe464f4cf5e"
       },
       "apiUrl": "https://bethel-ag.onrender.com/api",
       "appVersion": "1.0.0"
