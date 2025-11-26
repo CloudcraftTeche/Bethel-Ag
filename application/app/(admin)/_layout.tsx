@@ -53,7 +53,6 @@ export default function AdminLayout() {
       <Stack.Screen name="groups" />
       <Stack.Screen name="create-group" />
       <Stack.Screen name="edit-group/[id]" />
-      <Stack.Screen name="notifications" />
       <Stack.Screen name="send-notification" />
     </Stack>
   );

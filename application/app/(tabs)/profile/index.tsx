@@ -5,6 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import { Image } from "expo-image";
 
@@ -17,6 +19,16 @@ import { BlurView } from 'expo-blur';
 import apiService from '../../../src/services/api';
 import { User } from '../../../src/types';
 import { useTheme } from '../../../src/context/ThemeContext';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+type MenuItem = {
+  icon: string;
+  title: string;
+  subtitle: string;
+  color: string;
+  onPress: () => void;
+};
 
 export default function ProfileSidebarScreen() {
   const router = useRouter();
@@ -52,24 +64,7 @@ export default function ProfileSidebarScreen() {
 
   const isDark = theme === 'dark';
 
-  if (!user) {
-    return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <LinearGradient
-          colors={isDark 
-            ? ['#0f0f0f', '#1a1a2e', '#16213e']
-            : ['#f5f7fa', '#c3cfe2', '#667eea']
-          }
-          style={StyleSheet.absoluteFillObject}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        />
-        <Text style={{ color: colors.text }}>Loading...</Text>
-      </View>
-    );
-  }
-
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       icon: 'person',
       title: 'Profile Settings',
@@ -100,9 +95,152 @@ export default function ProfileSidebarScreen() {
     },
   ];
 
+  const renderHeader = () => (
+    <Animated.View
+      entering={FadeInDown.delay(200).duration(600).springify()}
+      style={styles.header}
+    >
+      <View style={styles.avatarContainer}>
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          style={styles.avatarGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.avatarInner}>
+            {user?.avatar ? (
+              <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>
+                {user?.name.charAt(0).toUpperCase()}
+              </Text>
+            )}
+          </View>
+        </LinearGradient>
+      </View>
+      <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
+        {user?.name}
+      </Text>
+      <Text style={[styles.email, { color: colors.textSecondary }]} numberOfLines={1}>
+        {user?.email}
+      </Text>
+    </Animated.View>
+  );
+
+  const renderAdminSection = () => {
+    if (user?.role !== 'admin') return null;
+
+    return (
+      <Animated.View
+        entering={FadeInDown.delay(300).duration(600).springify()}
+        style={styles.adminSection}
+      >
+        <TouchableOpacity
+          style={styles.adminButtonWrapper}
+          onPress={() => router.push('/(admin)')}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            style={styles.adminButton}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.adminButtonIcon}>
+              <Ionicons name="shield-checkmark" size={22} color="#FFFFFF" />
+            </View>
+            <View style={styles.adminButtonContent}>
+              <Text style={styles.adminButtonTitle}>Admin Panel</Text>
+              <Text style={styles.adminButtonSubtitle} numberOfLines={1}>
+                Manage users, events & groups
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.8)" />
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  const renderMenuItem = ({ item, index }: { item: MenuItem; index: number }) => (
+    <Animated.View
+      entering={FadeInDown.delay(450 + index * 50).springify()}
+      style={styles.menuItemWrapper}
+    >
+      <TouchableOpacity
+        onPress={item.onPress}
+        activeOpacity={0.7}
+      >
+        <BlurView
+          intensity={isDark ? 15 : 25}
+          tint={isDark ? 'dark' : 'light'}
+          style={[
+            styles.menuItem,
+            {
+              borderColor: isDark 
+                ? 'rgba(255,255,255,0.08)' 
+                : 'rgba(255,255,255,0.5)',
+            }
+          ]}
+        >
+          <View style={[styles.menuIconContainer, { backgroundColor: `${item.color}20` }]}>
+            <Ionicons name={item.icon as any} size={20} color={item.color} />
+          </View>
+          <View style={styles.menuContent}>
+            <Text style={[styles.menuItemText, { color: colors.text }]} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={[styles.menuItemSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+              {item.subtitle}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </BlurView>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  const renderFooter = () => (
+    <Animated.View 
+      entering={FadeInDown.delay(700).duration(600).springify()}
+      style={styles.logoutSection}
+    >
+      <TouchableOpacity 
+        onPress={handleLogout}
+        activeOpacity={0.8}
+      >
+        <LinearGradient
+          colors={['#FF6B6B', '#EE5A6F']}
+          style={styles.logoutButton}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
+          <Text style={styles.logoutButtonText}>Log Out</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  if (!user) {
+    return (
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <LinearGradient
+          colors={isDark 
+            ? ['#0f0f0f', '#1a1a2e', '#16213e']
+            : ['#f5f7fa', '#c3cfe2', '#667eea']
+          }
+          style={StyleSheet.absoluteFillObject}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        <Text style={{ color: colors.text }}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.wrapper}>
-   
       <TouchableOpacity
         style={styles.overlay}
         activeOpacity={1}
@@ -157,128 +295,22 @@ export default function ProfileSidebarScreen() {
             </TouchableOpacity>
           </Animated.View>
 
-          <Animated.View
-            entering={FadeInDown.delay(200).duration(600).springify()}
-            style={styles.header}
-          >
-            <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={['#667eea', '#764ba2']}
-                style={styles.avatarGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.avatarInner}>
-                  {user.avatar ? (
-                    <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
-                  ) : (
-                    <Text style={styles.avatarText}>
-                      {user.name.charAt(0).toUpperCase()}
-                    </Text>
-                  )}
-                </View>
-              </LinearGradient>
-            </View>
-            <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
-            <Text style={[styles.email, { color: colors.textSecondary }]}>{user.email}</Text>
-          </Animated.View>
-
-          {user.role === 'admin' && (
-            <Animated.View
-              entering={FadeInDown.delay(300).duration(600).springify()}
-              style={styles.adminSection}
-            >
-              <TouchableOpacity
-                style={styles.adminButtonWrapper}
-                onPress={() => router.push('/(admin)')}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#667eea', '#764ba2']}
-                  style={styles.adminButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <View style={styles.adminButtonIcon}>
-                    <Ionicons name="shield-checkmark" size={24} color="#FFFFFF" />
-                  </View>
-                  <View style={styles.adminButtonContent}>
-                    <Text style={styles.adminButtonTitle}>Admin Panel</Text>
-                    <Text style={styles.adminButtonSubtitle}>
-                      Manage users, events & groups
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.8)" />
-                </LinearGradient>
-              </TouchableOpacity>
-            </Animated.View>
-          )}
-
-          <Animated.View
-            entering={FadeInDown.delay(400).duration(600).springify()}
-            style={styles.menuSection}
-          >
-            {menuItems.map((item, index) => (
-              <Animated.View
-                key={item.title}
-                entering={FadeInDown.delay(450 + index * 50).springify()}
-                style={styles.menuItemWrapper}
-              >
-                <TouchableOpacity
-                  onPress={item.onPress}
-                  activeOpacity={0.7}
-                >
-                  <BlurView
-                    intensity={isDark ? 15 : 25}
-                    tint={isDark ? 'dark' : 'light'}
-                    style={[
-                      styles.menuItem,
-                      {
-                        borderColor: isDark 
-                          ? 'rgba(255,255,255,0.08)' 
-                          : 'rgba(255,255,255,0.5)',
-                      }
-                    ]}
-                  >
-                    <View style={[styles.menuIconContainer, { backgroundColor: `${item.color}20` }]}>
-                      <Ionicons name={item.icon as any} size={22} color={item.color} />
-                    </View>
-                    <View style={styles.menuContent}>
-                      <Text style={[styles.menuItemText, { color: colors.text }]}>
-                        {item.title}
-                      </Text>
-                      <Text style={[styles.menuItemSubtitle, { color: colors.textSecondary }]}>
-                        {item.subtitle}
-                      </Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-                  </BlurView>
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
-          </Animated.View>
-
-          <View style={styles.spacer} />
-
-          <Animated.View 
-            entering={FadeInDown.delay(700).duration(600).springify()}
-            style={styles.logoutSection}
-          >
-            <TouchableOpacity 
-              onPress={handleLogout}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={['#FF6B6B', '#EE5A6F']}
-                style={styles.logoutButton}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
-                <Text style={styles.logoutButtonText}>Log Out</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </Animated.View>
+          <FlatList
+            data={menuItems}
+            renderItem={renderMenuItem}
+            keyExtractor={(item) => item.title}
+            ListHeaderComponent={
+              <>
+                {renderHeader()}
+                {renderAdminSection()}
+              </>
+            }
+            ListFooterComponent={renderFooter}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+            overScrollMode="never"
+          />
         </Animated.View>
       </SafeAreaView>
     </View>
@@ -290,8 +322,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     backgroundColor: 'transparent',
-  
-
   },
   overlay: {
     position: 'absolute',
@@ -304,13 +334,18 @@ const styles = StyleSheet.create({
   sidebarContainer: {
     width: '85%',
     maxWidth: 360,
-
+    flex: 1,
+    height: '100%',
   },
   sidebar: {
     flex: 1,
     position: 'relative',
-    minHeight:"100%",
-    overflow: "scroll"
+    overflow: 'hidden',
+  },
+  listContent: {
+    paddingTop: 60,
+    paddingBottom: 20,
+    flexGrow: 1,
   },
   centered: {
     flex: 1,
@@ -335,8 +370,8 @@ const styles = StyleSheet.create({
   },
   closeButtonContainer: {
     position: 'absolute',
-    top: 60,
-    right: 20,
+    top: SCREEN_HEIGHT < 700 ? 10 : 16,
+    right: 16,
     zIndex: 10,
   },
   closeButtonWrapper: {
@@ -344,37 +379,37 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   closeButton: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: 12,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   header: {
-    paddingHorizontal: 24,
-    paddingTop: 80,
-    paddingBottom: 28,
+    paddingHorizontal: 20,
+    paddingTop: SCREEN_HEIGHT < 700 ? 12 : 20,
+    paddingBottom: SCREEN_HEIGHT < 700 ? 16 : 24,
     alignItems: 'center',
   },
   avatarContainer: {
-    marginBottom: 16,
+    marginBottom: SCREEN_HEIGHT < 700 ? 10 : 14,
   },
   avatarGradient: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: SCREEN_HEIGHT < 700 ? 70 : 80,
+    height: SCREEN_HEIGHT < 700 ? 70 : 80,
+    borderRadius: SCREEN_HEIGHT < 700 ? 35 : 40,
     padding: 3,
     shadowColor: '#667eea',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
-    shadowRadius: 16,
+    shadowRadius: 12,
     elevation: 8,
   },
   avatarInner: {
     width: '100%',
     height: '100%',
-    borderRadius: 41,
+    borderRadius: SCREEN_HEIGHT < 700 ? 32 : 37,
     backgroundColor: '#1a1a2e',
     justifyContent: 'center',
     alignItems: 'center',
@@ -385,120 +420,120 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   avatarText: {
-    fontSize: 36,
+    fontSize: SCREEN_HEIGHT < 700 ? 28 : 32,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   name: {
-    fontSize: 24,
+    fontSize: SCREEN_HEIGHT < 700 ? 20 : 22,
     fontWeight: '700',
     marginBottom: 4,
     letterSpacing: -0.3,
+    paddingHorizontal: 8,
   },
   email: {
-    fontSize: 14,
+    fontSize: SCREEN_HEIGHT < 700 ? 12 : 13,
     fontWeight: '500',
+    paddingHorizontal: 8,
   },
   adminSection: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    marginBottom: SCREEN_HEIGHT < 700 ? 16 : 20,
   },
   adminButtonWrapper: {
-    borderRadius: 18,
+    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#667eea',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
   },
   adminButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 18,
-    borderRadius: 18,
+    padding: SCREEN_HEIGHT < 700 ? 14 : 16,
+    borderRadius: 16,
   },
   adminButtonIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: SCREEN_HEIGHT < 700 ? 40 : 44,
+    height: SCREEN_HEIGHT < 700 ? 40 : 44,
+    borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 12,
   },
   adminButtonContent: {
     flex: 1,
+    marginRight: 8,
   },
   adminButtonTitle: {
-    fontSize: 17,
+    fontSize: SCREEN_HEIGHT < 700 ? 15 : 16,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 3,
+    marginBottom: 2,
     letterSpacing: -0.2,
   },
   adminButtonSubtitle: {
-    fontSize: 13,
+    fontSize: SCREEN_HEIGHT < 700 ? 11 : 12,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.85)',
   },
-  menuSection: {
-    paddingHorizontal: 20,
-  },
   menuItemWrapper: {
-    marginBottom: 12,
+    marginBottom: SCREEN_HEIGHT < 700 ? 8 : 10,
+    paddingHorizontal: 16,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
-    padding: 16,
+    padding: SCREEN_HEIGHT < 700 ? 12 : 14,
     overflow: 'hidden',
   },
   menuIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: SCREEN_HEIGHT < 700 ? 40 : 44,
+    height: SCREEN_HEIGHT < 700 ? 40 : 44,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 12,
   },
   menuContent: {
     flex: 1,
+    marginRight: 8,
   },
   menuItemText: {
-    fontSize: 16,
+    fontSize: SCREEN_HEIGHT < 700 ? 14 : 15,
     fontWeight: '600',
     marginBottom: 2,
     letterSpacing: -0.1,
   },
   menuItemSubtitle: {
-    fontSize: 13,
+    fontSize: SCREEN_HEIGHT < 700 ? 11 : 12,
     fontWeight: '500',
   },
-  spacer: {
-    flex: 1,
-  },
   logoutSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: 16,
+    paddingTop: SCREEN_HEIGHT < 700 ? 16 : 20,
+    paddingBottom: SCREEN_HEIGHT < 700 ? 8 : 12,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 16,
-    gap: 10,
+    paddingVertical: SCREEN_HEIGHT < 700 ? 13 : 15,
+    borderRadius: 14,
+    gap: 8,
     shadowColor: '#FF6B6B',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
   },
   logoutButtonText: {
-    fontSize: 17,
+    fontSize: SCREEN_HEIGHT < 700 ? 15 : 16,
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: -0.2,

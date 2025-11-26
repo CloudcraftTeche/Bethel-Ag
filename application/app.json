@@ -33,7 +33,7 @@
       ]
     ],
     "splash": {
-      "image": "./assets/logo.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#1a1a2e"
     },
@@ -62,7 +62,7 @@
         ]
       },
       "splash": {
-        "image": "./assets/logo.png",
+        "image": "./assets/icon.png",
         "tabletImage": "./assets/logo.png",
         "resizeMode": "contain",
         "backgroundColor": "#1a1a2e"
@@ -76,7 +76,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logoicon.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#1a1a2e"
       },
       "enableProguardInReleaseBuilds": true,
@@ -113,7 +113,7 @@
         }
       ],
       "splash": {
-        "image": "./assets/logo.png",
+        "image": "./assets/icon.png",
         "resizeMode": "contain",
         "backgroundColor": "#1a1a2e"
       }
