@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,25 +10,67 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiService from '../../src/services/api';
 import { useTheme } from '../../src/context/ThemeContext';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
-  const { resetToken } = useLocalSearchParams<{ resetToken: string }>();
   const { theme, colors } = useTheme();
+  
+  const [resetToken, setResetToken] = useState<string>('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingToken, setLoadingToken] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+
+  useEffect(() => {
+    const getResetToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('resetToken');
+        
+        if (token) {
+          setResetToken(token);
+        } else {
+          Alert.alert(
+            'Error', 
+            'Invalid session. Please verify your OTP again.', 
+            [
+              {
+                text: 'OK',
+                onPress: () => router.replace('/(auth)/forgot-password')
+              }
+            ]
+          );
+        }
+      } catch (error) {
+        console.error('Error retrieving reset token:', error);
+        Alert.alert(
+          'Error',
+          'Failed to load session. Please try again.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/(auth)/forgot-password')
+            }
+          ]
+        );
+      } finally {
+        setLoadingToken(false);
+      }
+    };
+    
+    getResetToken();
+  }, []);
 
   const calculatePasswordStrength = (pwd: string) => {
     let strength = 0;
@@ -80,7 +122,10 @@ export default function ResetPasswordScreen() {
 
     setLoading(true);
     try {
-      await apiService.resetPasswordWithToken(resetToken as string, password);
+      console.log('Resetting password with token:', resetToken);
+      await apiService.resetPasswordWithToken(resetToken, password);
+      
+      await AsyncStorage.removeItem('resetToken');
       
       Alert.alert(
         'Success',
@@ -93,6 +138,7 @@ export default function ResetPasswordScreen() {
         ]
       );
     } catch (error: any) {
+      console.error('Reset Password Error:', error);
       Alert.alert(
         'Error',
         error.response?.data?.message || 'Failed to reset password'
@@ -103,6 +149,28 @@ export default function ResetPasswordScreen() {
   };
 
   const isDark = theme === 'dark';
+
+  if (loadingToken) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={isDark 
+            ? ['#0f0f0f', '#1a1a2e', '#16213e']
+            : ['#f5f7fa', '#c3cfe2', '#667eea']
+          }
+          style={StyleSheet.absoluteFillObject}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.text }]}>
+            Loading...
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -351,6 +419,16 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
   },
   decorativeOrb1: {
     position: 'absolute',

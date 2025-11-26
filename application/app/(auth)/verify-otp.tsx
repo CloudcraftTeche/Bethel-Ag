@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiService from '../../src/services/api';
 import { useTheme } from '../../src/context/ThemeContext';
 
@@ -72,26 +73,33 @@ export default function VerifyOTPScreen() {
 
     setLoading(true);
     try {
-      
       const response = await apiService.verifyOTP(email as string, otpCode);
       
-      Alert.alert(
-        'Success',
-        'OTP verified successfully',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.push({
-              pathname: '/(auth)/reset-password',
-              params: { resetToken: response.data.resetToken }
-            })
-          }
-        ]
-      );
+      
+      const resetToken = response.resetToken || response.data?.resetToken;
+      
+      if (resetToken) {
+        await AsyncStorage.setItem('resetToken', resetToken);
+        
+        Alert.alert(
+          'Success',
+          'OTP verified successfully',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/(auth)/reset-password')
+            }
+          ]
+        );
+      } else {
+        console.error('Response structure:', JSON.stringify(response));
+        throw new Error('Reset token not received from server');
+      }
     } catch (error: any) {
+      console.error('Verify OTP Error:', error);
       Alert.alert(
         'Error',
-        error.response?.data?.message || 'Invalid or expired OTP'
+        error.response?.data?.message || error.message || 'Invalid or expired OTP'
       );
     } finally {
       setLoading(false);
