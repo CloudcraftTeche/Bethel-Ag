@@ -48,7 +48,6 @@ export const register = async (req: Request, res: Response) => {
     user = new User({
       name,
       email,
-      password: generatedPassword,
       nickname,
       role: role || 'user',
       mobile,
@@ -59,6 +58,8 @@ export const register = async (req: Request, res: Response) => {
       nativePlace,
       church,
     });
+
+    user.password = generatedPassword;
 
     await user.save();
 
