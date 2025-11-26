@@ -43,61 +43,7 @@ export const getContact = async (req: Request, res: Response) => {
   }
 };
 
-export const createContact = async (req: Request, res: Response) => {
-  try {
-    const {
-      name,
-      email,
-      password,
-      nickname,
-      role,
-      mobile,
-      alternateMobile,
-      address,
-      spouse,
-      children,
-      nativePlace,
-      church,
-      avatar,
-    } = req.body;
 
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    user = new User({
-      name,
-      email,
-      password,
-      nickname,
-      role: role || 'user',
-      mobile,
-      alternateMobile,
-      address,
-      spouse,
-      children,
-      nativePlace,
-      church,
-      avatar,
-    });
-
-    await user.save();
-
-    res.status(201).json({
-      success: true,
-      data: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    console.error('Create contact error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
 
 export const updateContact = async (req: Request, res: Response) => {
   try {

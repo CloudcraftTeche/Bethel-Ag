@@ -173,7 +173,7 @@ export default function TabsLayout() {
           listeners={tab.name === 'youtube' ? {
             tabPress: (e) => {
               e.preventDefault();
-              Linking.openURL('https://www.youtube.com/@bethelagdubai');
+              Linking.openURL('https://www.youtube.com/@BethelAGDubai');
             },
           } : undefined}
         />

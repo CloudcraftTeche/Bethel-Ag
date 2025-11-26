@@ -1,28 +1,20 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import { validationResult } from 'express-validator';
 import User from '../models/User';
 import { sendEmail, sendWelcomeEmail, sendPasswordResetOTP } from '../utils/email';
 
-const generatePassword = (length: number = 12): string => {
-  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-  const numbers = '0123456789';
-  const symbols = '!@#$%^&*';
-  const allChars = uppercase + lowercase + numbers + symbols;
+const generatePassword = (length: number = 10): string => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
   
   let password = '';
-  password += uppercase[Math.floor(Math.random() * uppercase.length)];
-  password += lowercase[Math.floor(Math.random() * lowercase.length)];
-  password += numbers[Math.floor(Math.random() * numbers.length)];
-  password += symbols[Math.floor(Math.random() * symbols.length)];
-  
-  for (let i = password.length; i < length; i++) {
-    password += allChars[Math.floor(Math.random() * allChars.length)];
+  for (let i = 0; i < length; i++) {
+    password += chars[Math.floor(Math.random() * chars.length)];
   }
   
-  return password.split('').sort(() => Math.random() - 0.5).join('');
+  return password;
 };
 
 const generateOTP = (): string => {
@@ -43,7 +35,8 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const generatedPassword = generatePassword(12);
+    const generatedPassword = generatePassword(10);
+    
 
     user = new User({
       name,
@@ -57,13 +50,12 @@ export const register = async (req: Request, res: Response) => {
       children,
       nativePlace,
       church,
+      password: generatedPassword,
     });
-
-    user.password = generatedPassword;
 
     await user.save();
 
-    const emailSent = await sendWelcomeEmail({
+    await sendWelcomeEmail({
       to: user.email,
       name: user.name,
       email: user.email,
@@ -76,7 +68,7 @@ export const register = async (req: Request, res: Response) => {
       { expiresIn: '30d' }
     );
 
-    const response: any = {
+    res.status(201).json({
       token,
       user: {
         _id: user._id,
@@ -84,18 +76,8 @@ export const register = async (req: Request, res: Response) => {
         email: user.email,
         role: user.role,
       },
-    };
-
-    if (emailSent) {
-      response.message = 'User created successfully. Login credentials sent to email.';
-    } else {
-      response.message = 'User created successfully. Email service unavailable - please contact admin for credentials.';
-      response.warning = 'Email could not be sent';
-      response.tempPassword = generatedPassword; 
-      console.warn(`⚠️ Failed to send welcome email to ${user.email}. Temp password: ${generatedPassword}`);
-    }
-
-    res.status(201).json(response);
+      message: 'User created. Password sent to email.',
+    });
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -104,11 +86,6 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).select('+password');
@@ -116,7 +93,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await user.comparePassword(password.trim());
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -171,8 +148,14 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const otp = generateOTP();
     
+    console.log('========== PASSWORD RESET OTP ==========');
+    console.log('📧 Email:', email);
+    console.log('🔢 OTP:', otp);
+    console.log('⏰ Expires in: 10 minutes');
+    console.log('========================================');
+    
     user.resetPasswordOTP = crypto.createHash('sha256').update(otp).digest('hex');
-    user.resetPasswordOTPExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    user.resetPasswordOTPExpire = new Date(Date.now() + 10 * 60 * 1000);
     user.resetPasswordAttempts = (user.resetPasswordAttempts || 0) + 1;
     user.resetPasswordLastAttempt = now;
     
@@ -185,7 +168,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     });
 
     if (!emailSent) {
-      console.warn(`⚠️ Failed to send OTP email to ${user.email}. OTP: ${otp}`);
+      console.warn(`⚠️ Failed to send OTP email to ${user.email}`);
       
       return res.json({ 
         success: true,
@@ -195,13 +178,15 @@ export const forgotPassword = async (req: Request, res: Response) => {
       });
     }
 
+    console.log('✅ Password reset OTP sent to:', email);
+
     res.json({
       success: true,
       message: 'Password reset code sent to your email. Valid for 10 minutes.',
       expiresIn: 600
     });
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error('❌ Forgot password error:', error);
     res.status(500).json({ message: 'Error processing request' });
   }
 };
@@ -223,6 +208,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
     }).select('+resetPasswordOTP +resetPasswordOTPExpire');
 
     if (!user) {
+      console.log('❌ Invalid or expired OTP for:', email);
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
@@ -232,13 +218,15 @@ export const verifyOTP = async (req: Request, res: Response) => {
       { expiresIn: '15m' }
     );
 
+    console.log('✅ OTP verified successfully for:', email);
+
     res.json({ 
       success: true, 
       message: 'OTP verified successfully',
       resetToken 
     });
   } catch (error) {
-    console.error('Verify OTP error:', error);
+    console.error('❌ Verify OTP error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -261,18 +249,33 @@ export const resetPassword = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
 
-    const user = await User.findById(decoded.userId).select('+resetPasswordOTP +resetPasswordOTPExpire');
+    const user = await User.findById(decoded.userId).select('+resetPasswordOTP +resetPasswordOTPExpire +password');
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    console.log('========== PASSWORD RESET ==========');
+    console.log('📧 Email:', user.email);
+    console.log('🔑 New Password:', password);
+    console.log('====================================');
+
+    // Set new password - will be hashed by pre-save hook
     user.password = password;
     user.resetPasswordOTP = undefined;
     user.resetPasswordOTPExpire = undefined;
     user.resetPasswordAttempts = 0;
     user.resetPasswordLastAttempt = undefined;
     await user.save();
+
+    // Verify the new password works
+    const testUser = await User.findById(user._id).select('+password');
+    if (testUser) {
+      const testMatch = await bcrypt.compare(password, testUser.password);
+      console.log('🧪 New Password Test (should be true):', testMatch);
+    }
+
+    console.log('✅ Password reset successful for:', user.email);
 
     await sendEmail({
       to: user.email,
@@ -313,7 +316,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     res.json({ success: true, message: 'Password reset successful' });
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error('❌ Reset password error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -328,17 +331,31 @@ export const changePassword = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    console.log('========== CHANGE PASSWORD ==========');
+    console.log('📧 Email:', user.email);
+    console.log('====================================');
+
     const isMatch = await user.comparePassword(oldPassword);
     if (!isMatch) {
+      console.log('❌ Old password incorrect');
       return res.status(400).json({ message: 'Current password is incorrect' });
     }
 
     user.password = newPassword;
     await user.save();
 
+    // Verify the new password works
+    const testUser = await User.findById(user._id).select('+password');
+    if (testUser) {
+      const testMatch = await bcrypt.compare(newPassword, testUser.password);
+      console.log('🧪 New Password Test (should be true):', testMatch);
+    }
+
+    console.log('✅ Password changed successfully for:', user.email);
+
     res.json({ success: true, message: 'Password changed successfully' });
   } catch (error) {
-    console.error('Change password error:', error);
+    console.error('❌ Change password error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
