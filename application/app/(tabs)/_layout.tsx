@@ -9,9 +9,11 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import apiService from '../../src/services/api';
 
-const AnimatedIcon = ({ name, color, size, focused, gradient }: any) => {
+const AnimatedIcon = ({ name, color, size, focused, gradient, showBadge }: any) => {
   const scale = useSharedValue(focused ? 1 : 0.9);
   const translateY = useSharedValue(focused ? -2 : 0);
 
@@ -37,13 +39,15 @@ const AnimatedIcon = ({ name, color, size, focused, gradient }: any) => {
 
   return (
     <Animated.View style={[styles.iconContainer, animatedStyle]}>
-    
       <Ionicons 
         name={focused ? name : name} 
         size={24} 
         color={focused ? gradient[0] : color} 
       />
-    
+      {showBadge && (
+        <View style={styles.badge}>
+        </View>
+      )}
     </Animated.View>
   );
 };
@@ -51,8 +55,36 @@ const AnimatedIcon = ({ name, color, size, focused, gradient }: any) => {
 export default function TabsLayout() {
   const { colors, theme } = useTheme();
   const isDark = theme === 'dark';
+  const insets = useSafeAreaInsets();
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
-  const tabConfig = [
+  const hasBottomInset = insets.bottom > 0;
+  const tabBarHeight = hasBottomInset ? 70 : 70;
+  const bottomMargin = hasBottomInset ? Math.max(insets.bottom - 10, 5) : 25;
+  const paddingBottom = hasBottomInset ? 8 : 12;
+
+  // Check for unread notifications
+  useEffect(() => {
+    const checkUnreadNotifications = async () => {
+      try {
+        const notifications = await apiService.getNotifications();
+        const hasUnread = notifications.some((n: any) => !n.read);
+        setHasUnreadNotifications(hasUnread);
+      } catch (error) {
+        console.error('Error checking notifications:', error);
+      }
+    };
+
+    // Initial check
+    checkUnreadNotifications();
+    
+    // Poll for updates every 30 seconds
+    const interval = setInterval(checkUnreadNotifications, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const tabConfig = useMemo(() => [
     {
       name: 'index',
       title: 'Contacts',
@@ -87,8 +119,40 @@ export default function TabsLayout() {
       icon: 'notifications',
       iconOutline: 'notifications-outline',
       gradient: ['#FF6B6B', '#EE5A6F'],
+      showBadge: true,
     },
-  ];
+  ], []);
+
+  const renderTabScreen = (tab: typeof tabConfig[0]) => {
+    const listeners = tab.name === 'youtube' ? {
+      tabPress: (e: any) => {
+        e.preventDefault();
+        Linking.openURL('https://www.youtube.com/@BethelAGDubai');
+      },
+    } : undefined;
+
+    return (
+      <Tabs.Screen
+        key={tab.name}
+        name={tab.name}
+        options={{
+          title: tab.title,
+          tabBarIcon: ({ color, size, focused }) => (
+            <AnimatedIcon
+              name={focused ? tab.icon : tab.iconOutline}
+              color={color}
+              size={size}
+              focused={focused}
+              gradient={tab.gradient}
+              showBadge={tab.showBadge && hasUnreadNotifications}
+            />
+          ),
+          tabBarActiveTintColor: tab.gradient[0],
+        }}
+        listeners={listeners}
+      />
+    );
+  };
 
   return (
     <Tabs
@@ -98,13 +162,13 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: isDark ? '#8E8E93' : '#9CA3AF',
         tabBarStyle: {
           position: 'absolute',
-          bottom: 25,
+          bottom: bottomMargin,
           left: 16,
           right: 16,
           backgroundColor: 'transparent',
           borderTopWidth: 0,
-          height: 70,
-          paddingBottom: 12,
+          height: tabBarHeight,
+          paddingBottom: paddingBottom,
           paddingTop: 12,
           marginLeft: 15,
           marginRight: 15,
@@ -153,31 +217,7 @@ export default function TabsLayout() {
         },
       }}
     >
-      {tabConfig.map((tab) => (
-        <Tabs.Screen
-          key={tab.name}
-          name={tab.name}
-          options={{
-            title: tab.title,
-            tabBarIcon: ({ color, size, focused }) => (
-              <AnimatedIcon
-                name={focused ? tab.icon : tab.iconOutline}
-                color={color}
-                size={size}
-                focused={focused}
-                gradient={tab.gradient}
-              />
-            ),
-            tabBarActiveTintColor: tab.gradient[0],
-          }}
-          listeners={tab.name === 'youtube' ? {
-            tabPress: (e) => {
-              e.preventDefault();
-              Linking.openURL('https://www.youtube.com/@BethelAGDubai');
-            },
-          } : undefined}
-        />
-      ))}
+      {tabConfig.map(renderTabScreen)}
       
       <Tabs.Screen
         name="contact/[id]"
@@ -243,6 +283,23 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
   },
-
-
+  badge: {
+    position: 'absolute',
+    top: 8,
+    right: 6,
+    backgroundColor: '#FF3B30',
+    borderRadius: 6,
+    width: 12,
+    height: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#FF3B30',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+ 
 });

@@ -3,10 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   RefreshControl,
-  FlatList,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -170,6 +169,188 @@ export default function AdminDashboard() {
     },
   ];
 
+  const renderStatCard = ({ item: stat, index }: { item: typeof statCards[0]; index: number }) => (
+    <Animated.View
+      entering={FadeInRight.delay(index * 80).springify()}
+      style={styles.statCardWrapper}
+    >
+      <BlurView
+        intensity={isDark ? 15 : 25}
+        tint={isDark ? 'dark' : 'light'}
+        style={[
+          styles.statCard,
+          {
+            borderColor: isDark 
+              ? 'rgba(255,255,255,0.08)' 
+              : 'rgba(255,255,255,0.5)',
+          }
+        ]}
+      >
+        <LinearGradient
+          colors={[`${stat.color}40`, `${stat.color}20`]}
+          style={styles.statIconContainer}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Ionicons name={stat.icon as any} size={26} color={stat.color} />
+        </LinearGradient>
+        <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
+        <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
+          {stat.title}
+        </Text>
+      </BlurView>
+    </Animated.View>
+  );
+
+  const renderMenuItem = ({ item, index }: { item: typeof menuItems[0]; index: number }) => (
+    <Animated.View
+      entering={FadeInRight.delay(400 + index * 80).springify()}
+      style={styles.menuItemWrapper}
+    >
+      <TouchableOpacity
+        onPress={() => router.push(item.route as any)}
+        activeOpacity={0.7}
+      >
+        <BlurView
+          intensity={isDark ? 15 : 25}
+          tint={isDark ? 'dark' : 'light'}
+          style={[
+            styles.menuItem,
+            {
+              borderColor: isDark 
+                ? 'rgba(255,255,255,0.08)' 
+                : 'rgba(255,255,255,0.5)',
+            }
+          ]}
+        >
+          <View style={[styles.menuIcon, { backgroundColor: `${item.color}20` }]}>
+            <Ionicons name={item.icon as any} size={24} color={item.color} />
+          </View>
+          <Text style={[styles.menuTitle, { color: colors.text }]}>{item.title}</Text>
+          {item.count !== null && (
+            <View style={[styles.badge, { backgroundColor: colors.backgroundSecondary }]}>
+              <Text style={[styles.badgeText, { color: colors.text }]}>{item.count}</Text>
+            </View>
+          )}
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </BlurView>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  const renderQuickCreateButton = ({ item: button, index }: { item: typeof quickCreateButtons[0]; index: number }) => (
+    <Animated.View
+      entering={FadeInDown.delay(700 + index * 80).springify()}
+    >
+      <TouchableOpacity
+        onPress={() => router.push(button.route as any)}
+        activeOpacity={0.85}
+        style={styles.quickCreateWrapper}
+      >
+        <LinearGradient
+          colors={button.gradient as any}
+          style={styles.quickCreateButton}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.quickCreateIconContainer}>
+            <Ionicons name={button.icon as any} size={26} color="#FFFFFF" />
+          </View>
+          <Text style={styles.quickCreateText}>{button.title}</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  const renderHeader = () => (
+    <>
+      <Animated.View 
+        entering={FadeInDown.duration(500).springify()}
+        style={styles.header}
+      >
+        <View>
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+            Welcome back,
+          </Text>
+          <Text style={[styles.userName, { color: colors.text }]}>{userName}</Text>
+          <BlurView
+            intensity={isDark ? 15 : 25}
+            tint={isDark ? 'dark' : 'light'}
+            style={[
+              styles.roleBadge,
+              {
+                borderColor: isDark 
+                  ? 'rgba(255,255,255,0.08)' 
+                  : 'rgba(255,255,255,0.5)',
+              }
+            ]}
+          >
+            <Ionicons name="shield-checkmark" size={14} color={colors.primary} />
+            <Text style={[styles.role, { color: colors.primary }]}>Administrator</Text>
+          </BlurView>
+        </View>
+        <TouchableOpacity 
+          style={styles.backButtonWrapper}
+          onPress={() => router.push('/(tabs)')}
+          activeOpacity={0.7}
+        >
+          <BlurView
+            intensity={isDark ? 15 : 25}
+            tint={isDark ? 'dark' : 'light'}
+            style={[
+              styles.backButton,
+              {
+                borderColor: isDark 
+                  ? 'rgba(255,255,255,0.08)' 
+                  : 'rgba(255,255,255,0.5)',
+              }
+            ]}
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          </BlurView>
+        </TouchableOpacity>
+      </Animated.View>
+
+      <View style={styles.statsSection}>
+        <FlatList
+          data={statCards}
+          renderItem={renderStatCard}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          scrollEnabled={false}
+          columnWrapperStyle={styles.statRow}
+        />
+      </View>
+
+      <Animated.View 
+        entering={FadeInDown.delay(300).duration(500).springify()}
+        style={styles.section}
+      >
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
+      </Animated.View>
+    </>
+  );
+
+  const renderFooter = () => (
+    <>
+      <Animated.View 
+        entering={FadeInDown.delay(600).duration(500).springify()}
+        style={styles.section}
+      >
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Create</Text>
+        <FlatList
+          data={quickCreateButtons}
+          renderItem={renderQuickCreateButton}
+          keyExtractor={(item) => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickCreateContainer}
+        />
+      </Animated.View>
+      <SafeAreaView edges={['bottom']} style={styles.footerSafeArea} />
+    </>
+  );
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -211,8 +392,14 @@ export default function AdminDashboard() {
       }]} />
 
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView
+        <FlatList
+          data={menuItems}
+          renderItem={renderMenuItem}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderHeader}
+          ListFooterComponent={renderFooter}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.flatListContent}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -220,170 +407,7 @@ export default function AdminDashboard() {
               tintColor={colors.primary}
             />
           }
-        >
-          <Animated.View 
-            entering={FadeInDown.duration(500).springify()}
-            style={styles.header}
-          >
-            <View>
-              <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-                Welcome back,
-              </Text>
-              <Text style={[styles.userName, { color: colors.text }]}>{userName}</Text>
-              <BlurView
-                intensity={isDark ? 15 : 25}
-                tint={isDark ? 'dark' : 'light'}
-                style={[
-                  styles.roleBadge,
-                  {
-                    borderColor: isDark 
-                      ? 'rgba(255,255,255,0.08)' 
-                      : 'rgba(255,255,255,0.5)',
-                  }
-                ]}
-              >
-                <Ionicons name="shield-checkmark" size={14} color={colors.primary} />
-                <Text style={[styles.role, { color: colors.primary }]}>Administrator</Text>
-              </BlurView>
-            </View>
-            <TouchableOpacity 
-              style={styles.backButtonWrapper}
-              onPress={() => router.push('/(tabs)')}
-              activeOpacity={0.7}
-            >
-              <BlurView
-                intensity={isDark ? 15 : 25}
-                tint={isDark ? 'dark' : 'light'}
-                style={[
-                  styles.backButton,
-                  {
-                    borderColor: isDark 
-                      ? 'rgba(255,255,255,0.08)' 
-                      : 'rgba(255,255,255,0.5)',
-                  }
-                ]}
-              >
-                <Ionicons name="arrow-back" size={22} color={colors.text} />
-              </BlurView>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <View style={styles.statsSection}>
-            {statCards.map((stat, index) => (
-              <Animated.View
-                key={stat.id}
-                entering={FadeInRight.delay(index * 80).springify()}
-                style={styles.statCardWrapper}
-              >
-                <BlurView
-                  intensity={isDark ? 15 : 25}
-                  tint={isDark ? 'dark' : 'light'}
-                  style={[
-                    styles.statCard,
-                    {
-                      borderColor: isDark 
-                        ? 'rgba(255,255,255,0.08)' 
-                        : 'rgba(255,255,255,0.5)',
-                    }
-                  ]}
-                >
-                  <LinearGradient
-                    colors={[`${stat.color}40`, `${stat.color}20`]}
-                    style={styles.statIconContainer}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  >
-                    <Ionicons name={stat.icon as any} size={26} color={stat.color} />
-                  </LinearGradient>
-                  <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
-                  <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
-                    {stat.title}
-                  </Text>
-                </BlurView>
-              </Animated.View>
-            ))}
-          </View>
-
-          <Animated.View 
-            entering={FadeInDown.delay(300).duration(500).springify()}
-            style={styles.section}
-          >
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
-            {menuItems.map((item, index) => (
-              <Animated.View
-                key={item.id}
-                entering={FadeInRight.delay(400 + index * 80).springify()}
-                style={styles.menuItemWrapper}
-              >
-                <TouchableOpacity
-                  onPress={() => router.push(item.route as any)}
-                  activeOpacity={0.7}
-                >
-                  <BlurView
-                    intensity={isDark ? 15 : 25}
-                    tint={isDark ? 'dark' : 'light'}
-                    style={[
-                      styles.menuItem,
-                      {
-                        borderColor: isDark 
-                          ? 'rgba(255,255,255,0.08)' 
-                          : 'rgba(255,255,255,0.5)',
-                      }
-                    ]}
-                  >
-                    <View style={[styles.menuIcon, { backgroundColor: `${item.color}20` }]}>
-                      <Ionicons name={item.icon as any} size={24} color={item.color} />
-                    </View>
-                    <Text style={[styles.menuTitle, { color: colors.text }]}>{item.title}</Text>
-                    {item.count !== null && (
-                      <View style={[styles.badge, { backgroundColor: colors.backgroundSecondary }]}>
-                        <Text style={[styles.badgeText, { color: colors.text }]}>{item.count}</Text>
-                      </View>
-                    )}
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-                  </BlurView>
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
-          </Animated.View>
-
-          <Animated.View 
-            entering={FadeInDown.delay(600).duration(500).springify()}
-            style={[styles.section, styles.lastSection]}
-          >
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Create</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.quickCreateContainer}
-            >
-              {quickCreateButtons.map((button, index) => (
-                <Animated.View
-                  key={button.id}
-                  entering={FadeInDown.delay(700 + index * 80).springify()}
-                >
-                  <TouchableOpacity
-                    onPress={() => router.push(button.route as any)}
-                    activeOpacity={0.85}
-                    style={styles.quickCreateWrapper}
-                  >
-                    <LinearGradient
-                      colors={button.gradient as any}
-                      style={styles.quickCreateButton}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                    >
-                      <View style={styles.quickCreateIconContainer}>
-                        <Ionicons name={button.icon as any} size={26} color="#FFFFFF" />
-                      </View>
-                      <Text style={styles.quickCreateText}>{button.title}</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </Animated.View>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        </ScrollView>
+        />
       </SafeAreaView>
     </View>
   );
@@ -395,6 +419,9 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  flatListContent: {
+    paddingHorizontal: 20,
   },
   decorativeOrb1: {
     position: 'absolute',
@@ -418,7 +445,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 28,
   },
@@ -462,11 +488,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statsSection: {
-    paddingHorizontal: 20,
     marginBottom: 28,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 14,
+  },
+  statRow: {
+    justifyContent: 'space-between',
+    marginBottom: 14,
   },
   statCardWrapper: {
     width: '48%',
@@ -499,11 +525,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   section: {
-    paddingHorizontal: 20,
     marginBottom: 28,
-  },
-  lastSection: {
-    marginBottom: 40,
+   
   },
   sectionTitle: {
     fontSize: 20,
@@ -553,6 +576,7 @@ const styles = StyleSheet.create({
   },
   quickCreateContainer: {
     gap: 12,
+    paddingVertical: 4,
   },
   quickCreateWrapper: {
     width: 110,
@@ -562,7 +586,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
-    elevation: 6,
   },
   quickCreateButton: {
     borderRadius: 18,
@@ -586,5 +609,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     letterSpacing: 0.2,
+  },
+  footerSafeArea: {
+    marginTop: 20,
   },
 });

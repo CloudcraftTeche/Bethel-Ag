@@ -62,7 +62,7 @@
         ]
       },
       "splash": {
-        "image": "./assets/logo.png",
+        "image": "./assets/icon.png",
         "resizeMode": "contain",
         "backgroundColor": "#1a1a2e"
       },
@@ -75,7 +75,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/logoicon.png",
         "backgroundColor": "#1a1a2e"
       },
       "enableProguardInReleaseBuilds": true,
@@ -115,11 +115,11 @@
         "image": "./assets/icon.png",
         "resizeMode": "contain",
         "backgroundColor": "#1a1a2e",
-        "mdpi": "./assets/logo.png",
-        "hdpi": "./assets/logo.png",
-        "xhdpi": "./assets/logo.png",
-        "xxhdpi": "./assets/logo.png",
-        "xxxhdpi": "./assets/logo.png"
+        "mdpi": "./assets/icon.png",
+        "hdpi": "./assets/icon.png",
+        "xhdpi": "./assets/icon.png",
+        "xxhdpi": "./assets/icon.png",
+        "xxxhdpi": "./assets/icon.png"
       }
     },
     "web": {
@@ -135,16 +135,16 @@
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/6a3cdb1e-7b5c-4d1f-b3d4-afe464f4cf5e"
+      "url": "https://u.expo.dev/64902914-bc16-482a-8138-9998ff3a5762"
     },
     "description": "Bethel AG Dubai - A modern platform for community and commerce.",
     "extra": {
       "eas": {
-        "projectId": "6a3cdb1e-7b5c-4d1f-b3d4-afe464f4cf5e"
+        "projectId": "64902914-bc16-482a-8138-9998ff3a5762"
       },
       "apiUrl": "https://bethel-ag.onrender.com/api",
       "appVersion": "1.0.0"
     },
-    "owner": "codewithdarshan"
+    "owner": "johnsmatz"
   }
 }

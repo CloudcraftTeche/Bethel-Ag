@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,9 +9,9 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from "react-native";
 import { Image } from "expo-image";
-
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInRight, FadeInDown } from "react-native-reanimated";
@@ -23,6 +23,8 @@ import { Contact } from "../../src/types";
 import { useTheme } from "../../src/context/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
+
 export default function ContactsScreen() {
   const router = useRouter();
   const { theme, colors } = useTheme();
@@ -32,6 +34,8 @@ export default function ContactsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentUser, setCurrentUser] = useState<Contact | null>(null);
+  const [sectionedContacts, setSectionedContacts] = useState<any[]>([]);
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     checkAuthAndLoad();
@@ -85,7 +89,13 @@ export default function ContactsScreen() {
 
   const filterContacts = () => {
     if (!search.trim()) {
-      setFilteredContacts(contacts);
+      const sorted = [...contacts].sort((a, b) => {
+        if (a._id === currentUser?._id) return -1;
+        if (b._id === currentUser?._id) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      setFilteredContacts(sorted);
+      createSections(sorted);
       return;
     }
 
@@ -94,7 +104,59 @@ export default function ContactsScreen() {
         contact.name.toLowerCase().includes(search.toLowerCase()) ||
         contact.nickname?.toLowerCase().includes(search.toLowerCase())
     );
-    setFilteredContacts(filtered);
+    
+    const sorted = filtered.sort((a, b) => {
+      if (a._id === currentUser?._id) return -1;
+      if (b._id === currentUser?._id) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    
+    setFilteredContacts(sorted);
+    createSections(sorted);
+  };
+
+  const createSections = (contactList: Contact[]) => {
+    const sections: any[] = [];
+    let currentSection = "";
+
+    contactList.forEach((contact, index) => {
+      const isCurrentUser = contact._id === currentUser?._id;
+      
+      if (isCurrentUser) {
+        if (sections.length === 0 || sections[sections.length - 1].type !== "header") {
+          sections.push({
+            type: "header",
+            letter: "★",
+            index: sections.length,
+          });
+        }
+        sections.push({
+          type: "contact",
+          data: contact,
+          index: sections.length,
+        });
+      } else {
+        const firstLetter = contact.name.charAt(0).toUpperCase();
+        const letter = /[A-Z]/.test(firstLetter) ? firstLetter : "#";
+
+        if (letter !== currentSection) {
+          currentSection = letter;
+          sections.push({
+            type: "header",
+            letter: letter,
+            index: sections.length,
+          });
+        }
+
+        sections.push({
+          type: "contact",
+          data: contact,
+          index: sections.length,
+        });
+      }
+    });
+
+    setSectionedContacts(sections);
   };
 
   const onRefresh = () => {
@@ -102,37 +164,68 @@ export default function ContactsScreen() {
     loadContacts();
   };
 
-  const renderContact = ({ item, index }: { item: Contact; index: number }) => {
-    const isCurrentUser = item._id === currentUser?._id;
+  const scrollToLetter = (letter: string) => {
+    const index = sectionedContacts.findIndex(
+      (item) => item.type === "header" && item.letter === letter
+    );
+    if (index !== -1 && flatListRef.current) {
+      flatListRef.current.scrollToIndex({ index, animated: true });
+    }
+  };
+
+  const renderItem = ({ item, index }: { item: any; index: number }) => {
+    if (item.type === "header") {
+      return (
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionHeaderText, { color: colors.primary }]}>
+            {item.letter}
+          </Text>
+        </View>
+      );
+    }
+
+    const contact = item.data;
+    const isCurrentUser = contact._id === currentUser?._id;
     const isDark = theme === "dark";
 
     return (
-      <Animated.View entering={FadeInRight.delay(index * 30).springify()}>
+      <Animated.View entering={FadeInRight.delay(index * 20).springify()}>
         <TouchableOpacity
           style={styles.contactItemWrapper}
-          onPress={() => router.push(`/contact/${item._id}`)}
+          onPress={() => router.push(`/contact/${contact._id}`)}
           activeOpacity={0.7}
         >
           <View style={styles.contactItem}>
             <View style={styles.avatarContainer}>
-              {item.avatar ? (
+              {contact.avatar ? (
                 <Image
-                  source={{ uri: item.avatar }}
+                  source={{ uri: contact.avatar }}
                   style={styles.avatarImage}
                 />
               ) : (
                 <LinearGradient
                   colors={
-                    isDark ? ["#0A84FF", "#0066CC"] : ["#667eea", "#764ba2"]
+                    isCurrentUser
+                      ? isDark 
+                        ? ["#FFD700", "#FFA500"] 
+                        : ["#FFD700", "#FF8C00"]
+                      : isDark 
+                        ? ["#0A84FF", "#0066CC"] 
+                        : ["#667eea", "#764ba2"]
                   }
                   style={styles.avatarPlaceholder}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
                   <Text style={styles.avatarText}>
-                    {item.name.charAt(0).toUpperCase()}
+                    {contact.name.charAt(0).toUpperCase()}
                   </Text>
                 </LinearGradient>
+              )}
+              {isCurrentUser && (
+                <View style={styles.starBadge}>
+                  <Ionicons name="star" size={12} color="#FFD700" />
+                </View>
               )}
             </View>
 
@@ -142,28 +235,16 @@ export default function ContactsScreen() {
                   style={[styles.contactName, { color: colors.text }]}
                   numberOfLines={1}
                 >
-                  {item.name}
+                  {contact.name}
                 </Text>
                 {isCurrentUser && (
-                  <Text
-                    style={[
-                      styles.youBadgeText,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    (You)
-                  </Text>
+                  <View style={[styles.youBadge, { backgroundColor: colors.primary + "20" }]}>
+                    <Text style={[styles.youBadgeText, { color: colors.primary }]}>
+                      You
+                    </Text>
+                  </View>
                 )}
               </View>
-              <Text
-                style={[
-                  styles.contactNickname,
-                  { color: colors.textSecondary },
-                ]}
-                numberOfLines={1}
-              >
-                {item.nickname || item.email}
-              </Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -253,6 +334,51 @@ export default function ContactsScreen() {
     );
   };
 
+  const renderAlphabetIndex = () => {
+    const isDark = theme === "dark";
+    
+    const availableLetters = new Set(
+      sectionedContacts
+        .filter(item => item.type === "header")
+        .map(item => item.letter)
+    );
+
+    return (
+      <View style={styles.alphabetContainer}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.alphabetScroll}
+        >
+          {["★", ...ALPHABET].map((letter) => {
+            const isAvailable = availableLetters.has(letter);
+            return (
+              <TouchableOpacity
+                key={letter}
+                onPress={() => isAvailable && scrollToLetter(letter)}
+                style={styles.alphabetItem}
+                disabled={!isAvailable}
+              >
+                <Text
+                  style={[
+                    styles.alphabetText,
+                    {
+                      color: isAvailable 
+                        ? colors.primary 
+                        : colors.textSecondary + "100",
+                      fontWeight: isAvailable ? "600" : "400",
+                    },
+                  ]}
+                >
+                  {letter}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+    );
+  };
+
   const isDark = theme === "dark";
 
   if (loading) {
@@ -338,20 +464,32 @@ export default function ContactsScreen() {
             </Text>
           </View>
         ) : (
-          <FlatList
-            data={filteredContacts}
-            renderItem={renderContact}
-            keyExtractor={(item) => item._id}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={colors.primary}
-              />
-            }
-          />
+          <View style={styles.listContainer}>
+            <FlatList
+              ref={flatListRef}
+              data={sectionedContacts}
+              renderItem={renderItem}
+              keyExtractor={(item) => `${item.type}-${item.index}`}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor={colors.primary}
+                />
+              }
+              onScrollToIndexFailed={(info) => {
+                const wait = new Promise(resolve => setTimeout(resolve, 500));
+                wait.then(() => {
+                  flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+                });
+              }}
+              scrollEnabled={true}
+              pagingEnabled={false}
+            />
+            {!search && renderAlphabetIndex()}
+          </View>
         )}
       </SafeAreaView>
     </View>
@@ -435,10 +573,14 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 4,
   },
+  listContainer: {
+    flex: 1,
+    position: "relative",
+  },
   listContent: {
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 20,
+    paddingBottom: 140,
   },
   contactItemWrapper: {
     marginBottom: 0,
@@ -451,21 +593,7 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginRight: 16,
-  },
-  avatarRing: {
-    position: "absolute",
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    top: -6,
-    left: -6,
-  },
-  avatarWrapper: {
-    width: 50,
-    height: 50,
-  },
-  avatarWithRing: {
-    margin: 6,
+    position: "relative",
   },
   avatarImage: {
     width: 56,
@@ -484,6 +612,19 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "600",
   },
+  starBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#1a1a2e",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#0f0f0f",
+  },
   contactInfo: {
     flex: 1,
     justifyContent: "center",
@@ -491,19 +632,52 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 4,
   },
   contactName: {
     fontSize: 16,
     fontWeight: "600",
-    marginRight: 6,
+    marginRight: 8,
+  },
+  youBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   youBadgeText: {
-    fontSize: 16,
-    fontWeight: "400",
+    fontSize: 12,
+    fontWeight: "600",
   },
-  contactNickname: {
-    fontSize: 14,
+  sectionHeader: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  sectionHeaderText: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  alphabetContainer: {
+    position: "absolute",
+    right: 10,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+    width: 24,
+    maxHeight:500
+  },
+  alphabetScroll: {
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  alphabetItem: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  alphabetText: {
+    fontSize: 15,
+    fontWeight: "600",
   },
   emptyContainer: {
     flex: 1,

@@ -264,7 +264,7 @@ export default function ProfileSidebarScreen() {
   }
 
   return (
-    <View style={styles.wrapper}>
+    <SafeAreaView style={styles.wrapper}>
       <TouchableOpacity
         style={styles.overlay}
         activeOpacity={1}
@@ -322,10 +322,11 @@ export default function ProfileSidebarScreen() {
               ListFooterComponent={renderFooter}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
-              bounces={true}
+              bounces={false}
               overScrollMode="never"
               scrollEnabled={true}
               nestedScrollEnabled={true}
+              style={{ flex: 1 }}
             />
           </Animated.View>
         </SafeAreaView>
@@ -359,7 +360,7 @@ export default function ProfileSidebarScreen() {
           </TouchableOpacity>
         </Animated.View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -378,7 +379,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   sidebarContainer: {
-    width: "85%",
+    width: "80%",
     maxWidth: 360,
     flex: 1,
     height: SCREEN_HEIGHT,
@@ -386,13 +387,11 @@ const styles = StyleSheet.create({
   sidebar: {
     flex: 1,
     position: "relative",
-    overflow: "hidden",
+    height: SCREEN_HEIGHT,
   },
   listContent: {
     paddingTop: 60,
     paddingBottom: 30,
-    flexGrow: 1,
-    minHeight: SCREEN_HEIGHT,
   },
   centered: {
     flex: 1,
@@ -531,14 +530,14 @@ const styles = StyleSheet.create({
   },
   menuItemWrapper: {
     marginBottom: SCREEN_HEIGHT < 700 ? 8 : 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 26,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 14,
     borderWidth: 1,
-    padding: SCREEN_HEIGHT < 700 ? 12 : 14,
+    padding: SCREEN_HEIGHT < 700 ? 14 : 18,
     overflow: "hidden",
   },
   menuIconContainer: {
