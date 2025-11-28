@@ -60,7 +60,6 @@ export default function TabsLayout() {
 
   const hasBottomInset = insets.bottom > 0;
   const tabBarHeight = hasBottomInset ? 70 : 70;
-  const bottomMargin = hasBottomInset ? Math.max(insets.bottom - 10, 5) : 25;
   const paddingBottom = hasBottomInset ? 8 : 12;
 
   // Check for unread notifications
@@ -75,10 +74,8 @@ export default function TabsLayout() {
       }
     };
 
-    // Initial check
     checkUnreadNotifications();
     
-    // Poll for updates every 30 seconds
     const interval = setInterval(checkUnreadNotifications, 30000);
     
     return () => clearInterval(interval);
@@ -162,7 +159,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: isDark ? '#8E8E93' : '#9CA3AF',
         tabBarStyle: {
           position: 'absolute',
-          bottom: bottomMargin,
+          bottom: 10,
           left: 16,
           right: 16,
           backgroundColor: 'transparent',
@@ -247,10 +244,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
-    elevation: 10,
+    elevation: 6,
   },
   topAccent: {
     position: 'absolute',

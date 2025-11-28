@@ -177,9 +177,7 @@ export default function ContactsScreen() {
     if (item.type === "header") {
       return (
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionHeaderText, { color: colors.primary }]}>
-            {item.letter}
-          </Text>
+       
         </View>
       );
     }
@@ -579,7 +577,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 10,
     paddingBottom: 140,
   },
   contactItemWrapper: {
@@ -588,28 +586,28 @@ const styles = StyleSheet.create({
   contactItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
+    padding: 10,
     backgroundColor: "transparent",
   },
   avatarContainer: {
-    marginRight: 16,
+    marginRight: 12,
     position: "relative",
   },
   avatarImage: {
-    width: 56,
-    height: 56,
+    width: 46,
+    height: 46,
     borderRadius: 28,
   },
   avatarPlaceholder: {
-    width: 56,
-    height: 56,
+    width: 46,
+    height: 46,
     borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
   },
   avatarText: {
     color: "#FFFFFF",
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "600",
   },
   starBadge: {
@@ -634,7 +632,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   contactName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
     marginRight: 8,
   },
@@ -648,9 +646,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   sectionHeader: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginTop: 8,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    marginTop: 0,
   },
   sectionHeaderText: {
     fontSize: 18,
@@ -663,7 +661,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
     width: 24,
-    maxHeight:500
+    maxHeight:400
   },
   alphabetScroll: {
     alignItems: "center",

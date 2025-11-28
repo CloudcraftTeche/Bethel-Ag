@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-
   Linking,
   ActivityIndicator,
 } from 'react-native';
@@ -35,6 +34,7 @@ export default function ContactDetailScreen() {
   const loadContact = async () => {
     try {
       const data = await apiService.getContact(id as string);
+      
       setContact(data);
     } catch (error) {
       console.error('Error loading contact:', error);
@@ -441,9 +441,11 @@ export default function ContactDetailScreen() {
                   <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
                     Children
                   </Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>
-                    {contact.children.join(', ')}
-                  </Text>
+                  {contact.children.map((child, index) => (
+                    <Text key={index} style={[styles.detailValue, { color: colors.text, marginTop: index > 0 ? 4 : 0 }]}>
+                      • {child}
+                    </Text>
+                  ))}
                 </View>
               </BlurView>
             )}
@@ -498,6 +500,40 @@ export default function ContactDetailScreen() {
                   <Text style={[styles.detailValue, { color: colors.text }]}>
                     {contact.church}
                   </Text>
+                </View>
+              </BlurView>
+            )}
+
+            {contact.photos && contact.photos.length > 0 && (
+              <BlurView
+                intensity={isDark ? 15 : 25}
+                tint={isDark ? 'dark' : 'light'}
+                style={[
+                  styles.detailCard,
+                  styles.photosCard,
+                  {
+                    borderColor: isDark 
+                      ? 'rgba(255,255,255,0.08)' 
+                      : 'rgba(255,255,255,0.5)',
+                  }
+                ]}
+              >
+                <View style={[styles.detailIconContainer, { backgroundColor: '#B39DDB20' }]}>
+                  <Ionicons name="images" size={20} color="#B39DDB" />
+                </View>
+                <View style={styles.detailContent}>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary, marginBottom: 12 }]}>
+                    Photos
+                  </Text>
+                  <View style={styles.photosGrid}>
+                    {contact.photos.map((photo, index) => (
+                      <Image 
+                        key={index} 
+                        source={{ uri: photo }} 
+                        style={styles.photoThumbnail}
+                      />
+                    ))}
+                  </View>
                 </View>
               </BlurView>
             )}
@@ -566,7 +602,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: 20,
   },
-
   avatarInner: {
     width: 120,
     height: 120,
@@ -626,11 +661,14 @@ const styles = StyleSheet.create({
   },
   detailCard: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     borderRadius: 16,
     borderWidth: 1,
     padding: 16,
     overflow: 'hidden',
+  },
+  photosCard: {
+    alignItems: 'flex-start',
   },
   detailIconContainer: {
     width: 40,
@@ -650,5 +688,15 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  photosGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  photoThumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
   },
 });

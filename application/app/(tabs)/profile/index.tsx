@@ -19,7 +19,6 @@ import { BlurView } from "expo-blur";
 import apiService from "../../../src/services/api";
 import { User } from "../../../src/types";
 import { useTheme } from "../../../src/context/ThemeContext";
-import { StatusBar } from "expo-status-bar";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -264,7 +263,7 @@ export default function ProfileSidebarScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.wrapper}>
+    <View style={styles.wrapper}>
       <TouchableOpacity
         style={styles.overlay}
         activeOpacity={1}
@@ -272,7 +271,7 @@ export default function ProfileSidebarScreen() {
       />
 
       <View style={styles.sidebarContainer}>
-        <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+        <View style={{ flex: 1 }}>
           <Animated.View
             entering={SlideInLeft.duration(400)}
             style={styles.sidebar}
@@ -329,7 +328,7 @@ export default function ProfileSidebarScreen() {
               style={{ flex: 1 }}
             />
           </Animated.View>
-        </SafeAreaView>
+        </View>
 
         <Animated.View
           entering={FadeInDown.delay(100).springify()}
@@ -360,7 +359,7 @@ export default function ProfileSidebarScreen() {
           </TouchableOpacity>
         </Animated.View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -368,7 +367,6 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: "transparent",
   },
   overlay: {
     position: "absolute",
@@ -376,21 +374,20 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
   sidebarContainer: {
     width: "80%",
     maxWidth: 360,
     flex: 1,
-    height: SCREEN_HEIGHT,
+    height: "100%",
   },
   sidebar: {
     flex: 1,
     position: "relative",
-    height: SCREEN_HEIGHT,
   },
   listContent: {
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: 30,
   },
   centered: {
@@ -416,7 +413,7 @@ const styles = StyleSheet.create({
   },
   closeButtonContainer: {
     position: "absolute",
-    top: SCREEN_HEIGHT < 700 ? 50 : 60,
+    top: SCREEN_HEIGHT < 700 ? 20 : 20,
     right: 16,
     zIndex: 10000,
     elevation: 10000,
@@ -436,12 +433,12 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: SCREEN_HEIGHT < 700 ? 8 : 20,
+    paddingTop: SCREEN_HEIGHT < 700 ? 6 : 10,
     paddingBottom: SCREEN_HEIGHT < 700 ? 12 : 24,
     alignItems: "center",
   },
   avatarContainer: {
-    marginBottom: SCREEN_HEIGHT < 700 ? 8 : 14,
+    marginBottom: SCREEN_HEIGHT < 700 ? 6: 14,
   },
   avatarGradient: {
     width: SCREEN_HEIGHT < 700 ? 65 : 80,
