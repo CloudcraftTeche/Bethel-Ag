@@ -19,6 +19,7 @@ import { BlurView } from 'expo-blur';
 import apiService from '../../../src/services/api';
 import imageUploadService from '../../../src/services/imageUpload';
 import { useTheme } from '../../../src/context/ThemeContext';
+import ImageViewer from '../../../src/components/ImageViewer';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -28,7 +29,11 @@ export default function EditProfileScreen() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [photoLoadStates, setPhotoLoadStates] = useState<{ [key: number]: boolean }>({});
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [viewerImage, setViewerImage] = useState<string>('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -43,6 +48,7 @@ export default function EditProfileScreen() {
 
   const loadProfile = async () => {
     try {
+      setLoadingProfile(true);
       const profile = await apiService.getProfile();
       setFormData({
         name: profile.name || '',
@@ -63,6 +69,11 @@ export default function EditProfileScreen() {
     } finally {
       setLoadingProfile(false);
     }
+  };
+
+  const openImageViewer = (uri: string) => {
+    setViewerImage(uri);
+    setViewerVisible(true);
   };
 
   const pickAndUploadAvatar = async () => {
@@ -89,6 +100,8 @@ export default function EditProfileScreen() {
     } catch (error) {
       console.error('Error uploading avatar:', error);
       Alert.alert('Error', 'Failed to upload avatar');
+      const profile = await apiService.getProfile();
+      setAvatarUri(profile.avatar || null);
     } finally {
       setUploadingAvatar(false);
     }
@@ -128,6 +141,7 @@ export default function EditProfileScreen() {
     } catch (error) {
       console.error('Error uploading photos:', error);
       Alert.alert('Error', 'Failed to upload photos');
+      setPhotos((prev) => prev.slice(0, prev.length));
     } finally {
       setUploadingPhotos(false);
     }
@@ -177,6 +191,14 @@ export default function EditProfileScreen() {
     }
   };
 
+  const handlePhotoLoadStart = (index: number) => {
+    setPhotoLoadStates(prev => ({ ...prev, [index]: true }));
+  };
+
+  const handlePhotoLoadEnd = (index: number) => {
+    setPhotoLoadStates(prev => ({ ...prev, [index]: false }));
+  };
+
   const isDark = theme === 'dark';
 
   if (loadingProfile) {
@@ -192,6 +214,9 @@ export default function EditProfileScreen() {
           end={{ x: 1, y: 1 }}
         />
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+          Loading profile...
+        </Text>
       </View>
     );
   }
@@ -242,14 +267,25 @@ export default function EditProfileScreen() {
             style={styles.avatarSection}
           >
             <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={isDark ? ['#0A84FF', '#0066CC'] : ['#667eea', '#764ba2']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              />
               <View style={styles.avatarInner}>
                 {avatarUri ? (
-                  <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                  <TouchableOpacity onPress={() => openImageViewer(avatarUri)} activeOpacity={0.8}>
+                    <View style={styles.imageWrapper}>
+                      <Image 
+                        source={{ uri: avatarUri }} 
+                        style={styles.avatar}
+                        contentFit="cover"
+                        transition={200}
+                        onLoadStart={() => setAvatarLoading(true)}
+                        onLoadEnd={() => setAvatarLoading(false)}
+                      />
+                      {avatarLoading && (
+                        <View style={styles.imageLoader}>
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
                 ) : (
                   <BlurView
                     intensity={isDark ? 15 : 25}
@@ -262,6 +298,7 @@ export default function EditProfileScreen() {
                 {uploadingAvatar && (
                   <View style={styles.uploadingOverlay}>
                     <ActivityIndicator size="large" color="#FFFFFF" />
+                    <Text style={styles.uploadingText}>Uploading...</Text>
                   </View>
                 )}
               </View>
@@ -414,10 +451,29 @@ export default function EditProfileScreen() {
 
           <Animated.View entering={FadeInDown.delay(350).duration(600).springify()}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Profile Photos</Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+              Add up to 4 photos
+            </Text>
             <View style={styles.photosGrid}>
               {photos.map((photo, index) => (
                 <View key={index} style={styles.photoContainer}>
-                  <Image source={{ uri: photo }} style={styles.photo} />
+                  <TouchableOpacity onPress={() => openImageViewer(photo)} activeOpacity={0.8}>
+                    <View style={styles.imageWrapper}>
+                      <Image 
+                        source={{ uri: photo }} 
+                        style={styles.photo}
+                        contentFit="cover"
+                        transition={200}
+                        onLoadStart={() => handlePhotoLoadStart(index)}
+                        onLoadEnd={() => handlePhotoLoadEnd(index)}
+                      />
+                      {photoLoadStates[index] && (
+                        <View style={styles.photoLoader}>
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.removePhotoButton}
                     onPress={() => removePhoto(index)}
@@ -444,7 +500,12 @@ export default function EditProfileScreen() {
                     ]}
                   >
                     {uploadingPhotos ? (
-                      <ActivityIndicator size="small" color={colors.textSecondary} />
+                      <>
+                        <ActivityIndicator size="small" color={colors.textSecondary} />
+                        <Text style={[styles.uploadingPhotoText, { color: colors.textSecondary }]}>
+                          Uploading...
+                        </Text>
+                      </>
                     ) : (
                       <>
                         <Ionicons name="camera-outline" size={32} color={colors.textSecondary} />
@@ -472,7 +533,10 @@ export default function EditProfileScreen() {
                 end={{ x: 1, y: 1 }}
               >
                 {loading ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <>
+                    <ActivityIndicator color="#FFFFFF" />
+                    <Text style={styles.saveButtonText}>Saving...</Text>
+                  </>
                 ) : (
                   <>
                     <Ionicons name="checkmark-circle" size={22} color="#FFFFFF" />
@@ -484,6 +548,12 @@ export default function EditProfileScreen() {
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
+
+      <ImageViewer
+        visible={viewerVisible}
+        imageUri={viewerImage}
+        onClose={() => setViewerVisible(false)}
+      />
     </View>
   );
 }
@@ -499,6 +569,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
   },
   decorativeOrb1: {
     position: 'absolute',
@@ -547,9 +622,25 @@ const styles = StyleSheet.create({
     height: 120,
     margin: 8,
   },
+  imageWrapper: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
   avatar: {
-    width: 120,
-    height: 120,
+    width: '100%',
+    height: '100%',
+    borderRadius: 60,
+  },
+  imageLoader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 60,
   },
   avatarPlaceholder: {
@@ -566,10 +657,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  uploadingText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    marginTop: 8,
+    fontWeight: '600',
   },
   editAvatarButton: {
     position: 'absolute',
@@ -613,6 +710,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     marginTop: 24,
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
     marginBottom: 16,
   },
   photosGrid: {
@@ -626,8 +727,19 @@ const styles = StyleSheet.create({
     height: 100,
   },
   photo: {
-    width: 100,
-    height: 100,
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+  },
+  photoLoader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 16,
   },
   removePhotoButton: {
@@ -653,6 +765,11 @@ const styles = StyleSheet.create({
   },
   addPhotoText: {
     fontSize: 12,
+    marginTop: 6,
+    fontWeight: '600',
+  },
+  uploadingPhotoText: {
+    fontSize: 11,
     marginTop: 6,
     fontWeight: '600',
   },

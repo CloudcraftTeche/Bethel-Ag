@@ -12,9 +12,7 @@
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#1a1a2e",
     "primaryColor": "#667eea",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "jsEngine": "hermes",
     "plugins": [
       [
@@ -33,8 +31,6 @@
       ]
     ],
     "splash": {
-      "image": "./assets/icon.png",
-      "resizeMode": "contain",
       "backgroundColor": "#1a1a2e"
     },
     "ios": {
@@ -45,9 +41,7 @@
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
-        "UIRequiredDeviceCapabilities": [
-          "armv7"
-        ],
+        "UIRequiredDeviceCapabilities": ["armv7"],
         "NSCameraUsageDescription": "This app uses your camera to capture images for profile and content creation.",
         "NSPhotoLibraryUsageDescription": "This app uses your photo library to upload images.",
         "NSPhotoLibraryAddOnlyUsageDescription": "This app needs to save photos to your library.",
@@ -56,14 +50,9 @@
         "NSContactsUsageDescription": "This app uses your contacts to help you connect with others.",
         "NSUserTrackingUsageDescription": "This app uses tracking to provide you with a better experience.",
         "NSLocalNetworkUsageDescription": "This app uses local network to enhance your experience.",
-        "NSBonjourServiceTypes": [
-          "_http._tcp",
-          "_https._tcp"
-        ]
+        "NSBonjourServiceTypes": ["_http._tcp", "_https._tcp"]
       },
       "splash": {
-        "image": "./assets/icon.png",
-        "resizeMode": "contain",
         "backgroundColor": "#1a1a2e"
       },
       "entitlements": {
@@ -105,21 +94,11 @@
               "scheme": "bethelagdubai"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
       "splash": {
-        "image": "./assets/icon.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#1a1a2e",
-        "mdpi": "./assets/icon.png",
-        "hdpi": "./assets/icon.png",
-        "xhdpi": "./assets/icon.png",
-        "xxhdpi": "./assets/icon.png",
-        "xxxhdpi": "./assets/icon.png"
+        "backgroundColor": "#1a1a2e"
       }
     },
     "web": {
@@ -142,7 +121,7 @@
       "eas": {
         "projectId": "64902914-bc16-482a-8138-9998ff3a5762"
       },
-      "apiUrl": "https://bethel-ag.onrender.com/api",
+      "apiUrl": "http://10.73.23.19:5000/api",
       "appVersion": "1.0.0"
     },
     "owner": "johnsmatz"

@@ -14,46 +14,55 @@
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleDebug"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
       "ios": {
         "simulator": false,
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "resourceClass": "m-medium"
       },
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
       },
       "env": {
-        "EXPO_PUBLIC_ENV": "preview"
-      }
+        "EXPO_PUBLIC_ENV": "preview",
+        "EXPO_PUBLIC_API_URL": "https://bethel-ag-dubai.onrender.com/api"
+      },
+      "channel": "preview"
     },
     "production": {
       "distribution": "store",
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "resourceClass": "m-medium"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "aab"
       },
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_ENV": "production"
-      }
+        "EXPO_PUBLIC_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://bethel-ag-dubai.onrender.com/api"
+      },
+      "channel": "production"
     }
   },
   "submit": {
     "production": {
       "ios": {
         "appleId": "your-apple-id@example.com",
-        "ascAppId": "your-app-store-connect-id",
-        "appleTeamId": "your-team-id"
+        "ascAppId": "1234567890",
+        "appleTeamId": "XXXXXXXXXX",
+        "sku": "com.bethelag.dubai"
       },
       "android": {
         "serviceAccountKeyPath": "../secrets/google-play-service-account.json",
-        "track": "internal"
+        "track": "internal",
+        "releaseStatus": "draft"
       }
     }
   }

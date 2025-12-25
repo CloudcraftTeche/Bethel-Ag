@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Image } from "expo-image";
-
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +18,7 @@ import { BlurView } from 'expo-blur';
 import apiService from '../../../src/services/api';
 import { Contact } from '../../../src/types';
 import { useTheme } from '../../../src/context/ThemeContext';
+import ImageViewer from '../../../src/components/ImageViewer';
 
 export default function ContactDetailScreen() {
   const router = useRouter();
@@ -26,6 +26,9 @@ export default function ContactDetailScreen() {
   const { theme, colors } = useTheme();
   const [contact, setContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(true);
+  const [imageLoadStates, setImageLoadStates] = useState<{ [key: string]: boolean }>({});
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [viewerImage, setViewerImage] = useState<string>('');
 
   useEffect(() => {
     loadContact();
@@ -33,14 +36,19 @@ export default function ContactDetailScreen() {
 
   const loadContact = async () => {
     try {
+      setLoading(true);
       const data = await apiService.getContact(id as string);
-      
       setContact(data);
     } catch (error) {
       console.error('Error loading contact:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const openImageViewer = (uri: string) => {
+    setViewerImage(uri);
+    setViewerVisible(true);
   };
 
   const handleCall = (phone: string) => {
@@ -60,6 +68,14 @@ export default function ContactDetailScreen() {
     Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
   };
 
+  const handleImageLoadStart = (key: string) => {
+    setImageLoadStates(prev => ({ ...prev, [key]: true }));
+  };
+
+  const handleImageLoadEnd = (key: string) => {
+    setImageLoadStates(prev => ({ ...prev, [key]: false }));
+  };
+
   const isDark = theme === 'dark';
 
   if (loading) {
@@ -75,6 +91,9 @@ export default function ContactDetailScreen() {
           end={{ x: 1, y: 1 }}
         />
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+          Loading contact...
+        </Text>
       </View>
     );
   }
@@ -91,9 +110,16 @@ export default function ContactDetailScreen() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         />
-        <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+        <Ionicons name="person-circle-outline" size={64} color={colors.textSecondary} />
+        <Text style={[styles.errorText, { color: colors.text }]}>
           Contact not found
         </Text>
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={[styles.backToContactsButton, { backgroundColor: colors.primary }]}
+        >
+          <Text style={styles.backToContactsText}>Go Back</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -135,27 +161,9 @@ export default function ContactDetailScreen() {
             </BlurView>
           </TouchableOpacity>
 
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Contact</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}> Back</Text>
 
-          <TouchableOpacity
-            onPress={() => router.push(`/(tabs)/profile/edit-profile`)}
-            style={styles.headerButton}
-          >
-            <BlurView
-              intensity={isDark ? 15 : 25}
-              tint={isDark ? 'dark' : 'light'}
-              style={[
-                styles.headerButtonInner,
-                {
-                  borderColor: isDark 
-                    ? 'rgba(255,255,255,0.08)' 
-                    : 'rgba(255,255,255,0.5)',
-                }
-              ]}
-            >
-              <Ionicons name="create-outline" size={24} color={colors.text} />
-            </BlurView>
-          </TouchableOpacity>
+         
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -164,14 +172,25 @@ export default function ContactDetailScreen() {
             style={styles.profileSection}
           >
             <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={isDark ? ['#0A84FF', '#0066CC'] : ['#667eea', '#764ba2']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              />
               <View style={styles.avatarInner}>
                 {contact.avatar ? (
-                  <Image source={{ uri: contact.avatar }} style={styles.avatar} />
+                  <TouchableOpacity onPress={() => openImageViewer(contact.avatar||"")} activeOpacity={0.8}>
+                    <View style={styles.imageWrapper}>
+                      <Image 
+                        source={{ uri: contact.avatar }} 
+                        style={styles.avatar}
+                        contentFit="cover"
+                        transition={200}
+                        onLoadStart={() => handleImageLoadStart('avatar')}
+                        onLoadEnd={() => handleImageLoadEnd('avatar')}
+                      />
+                      {imageLoadStates['avatar'] && (
+                        <View style={styles.imageLoader}>
+                          <ActivityIndicator size="small" color={colors.primary} />
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
                 ) : (
                   <LinearGradient
                     colors={isDark ? ['#0A84FF', '#0066CC'] : ['#667eea', '#764ba2']}
@@ -202,6 +221,7 @@ export default function ContactDetailScreen() {
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => contact.mobile && handleCall(contact.mobile)}
+              disabled={!contact.mobile}
             >
               <BlurView
                 intensity={isDark ? 15 : 25}
@@ -212,6 +232,7 @@ export default function ContactDetailScreen() {
                     borderColor: isDark 
                       ? 'rgba(255,255,255,0.08)' 
                       : 'rgba(255,255,255,0.5)',
+                    opacity: contact.mobile ? 1 : 0.5,
                   }
                 ]}
               >
@@ -223,6 +244,7 @@ export default function ContactDetailScreen() {
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => contact.mobile && handleMessage(contact.mobile)}
+              disabled={!contact.mobile}
             >
               <BlurView
                 intensity={isDark ? 15 : 25}
@@ -233,6 +255,7 @@ export default function ContactDetailScreen() {
                     borderColor: isDark 
                       ? 'rgba(255,255,255,0.08)' 
                       : 'rgba(255,255,255,0.5)',
+                    opacity: contact.mobile ? 1 : 0.5,
                   }
                 ]}
               >
@@ -265,6 +288,7 @@ export default function ContactDetailScreen() {
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => contact.address && handleMap(contact.address)}
+              disabled={!contact.address}
             >
               <BlurView
                 intensity={isDark ? 15 : 25}
@@ -275,6 +299,7 @@ export default function ContactDetailScreen() {
                     borderColor: isDark 
                       ? 'rgba(255,255,255,0.08)' 
                       : 'rgba(255,255,255,0.5)',
+                    opacity: contact.address ? 1 : 0.5,
                   }
                 ]}
               >
@@ -527,11 +552,23 @@ export default function ContactDetailScreen() {
                   </Text>
                   <View style={styles.photosGrid}>
                     {contact.photos.map((photo, index) => (
-                      <Image 
-                        key={index} 
-                        source={{ uri: photo }} 
-                        style={styles.photoThumbnail}
-                      />
+                      <TouchableOpacity key={index} onPress={() => openImageViewer(photo)} activeOpacity={0.8}>
+                        <View style={styles.photoWrapper}>
+                          <Image 
+                            source={{ uri: photo }} 
+                            style={styles.photoThumbnail}
+                            contentFit="cover"
+                            transition={200}
+                            onLoadStart={() => handleImageLoadStart(`photo-${index}`)}
+                            onLoadEnd={() => handleImageLoadEnd(`photo-${index}`)}
+                          />
+                          {imageLoadStates[`photo-${index}`] && (
+                            <View style={styles.photoLoader}>
+                              <ActivityIndicator size="small" color={colors.primary} />
+                            </View>
+                          )}
+                        </View>
+                      </TouchableOpacity>
                     ))}
                   </View>
                 </View>
@@ -540,6 +577,12 @@ export default function ContactDetailScreen() {
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
+
+      <ImageViewer
+        visible={viewerVisible}
+        imageUri={viewerImage}
+        onClose={() => setViewerVisible(false)}
+      />
     </View>
   );
 }
@@ -556,8 +599,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  errorText: {
+  loadingText: {
+    marginTop: 16,
     fontSize: 16,
+    fontWeight: '500',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  backToContactsButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  backToContactsText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   decorativeOrb: {
     position: 'absolute',
@@ -570,9 +631,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent:"flex-start",
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 5,
   },
   headerButton: {
     borderRadius: 14,
@@ -607,9 +668,25 @@ const styles = StyleSheet.create({
     height: 120,
     margin: 10,
   },
+  imageWrapper: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
   avatar: {
-    width: 120,
-    height: 120,
+    width: '100%',
+    height: '100%',
+    borderRadius: 60,
+  },
+  imageLoader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     borderRadius: 60,
   },
   avatarPlaceholder: {
@@ -694,9 +771,25 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  photoThumbnail: {
+  photoWrapper: {
+    position: 'relative',
     width: 80,
     height: 80,
+  },
+  photoThumbnail: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  photoLoader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     borderRadius: 12,
   },
 });

@@ -342,7 +342,7 @@ export default function ContactsScreen() {
     );
 
     return (
-      <View style={styles.alphabetContainer}>
+        <View style={styles.alphabetContainer}>
         <ScrollView 
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.alphabetScroll}
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
     width: 24,
-    maxHeight:400
+    maxHeight:"85%"
   },
   alphabetScroll: {
     alignItems: "center",
