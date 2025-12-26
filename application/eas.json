@@ -4,66 +4,34 @@
     "appVersionSource": "remote"
   },
   "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "ios": {
-        "simulator": true,
-        "buildConfiguration": "Debug"
-      },
-      "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleDebug"
-      },
-      "channel": "development"
-    },
-    "preview": {
-      "distribution": "internal",
-      "ios": {
-        "simulator": false,
-        "buildConfiguration": "Release",
-        "resourceClass": "m-medium"
-      },
-      "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease"
-      },
-      "env": {
-        "EXPO_PUBLIC_ENV": "preview",
-        "EXPO_PUBLIC_API_URL": "https://bethel-ag-dubai.onrender.com/api"
-      },
-      "channel": "preview"
-    },
     "production": {
-      "distribution": "store",
-      "ios": {
-        "buildConfiguration": "Release",
-        "resourceClass": "m-medium"
-      },
       "android": {
-        "buildType": "aab"
+        "buildType": "app-bundle"
       },
-      "autoIncrement": true,
-      "env": {
-        "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://bethel-ag-dubai.onrender.com/api"
-      },
-      "channel": "production"
+      "autoIncrement": true
     }
   },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "your-apple-id@example.com",
-        "ascAppId": "1234567890",
-        "appleTeamId": "XXXXXXXXXX",
-        "sku": "com.bethelag.dubai"
-      },
-      "android": {
-        "serviceAccountKeyPath": "../secrets/google-play-service-account.json",
-        "track": "internal",
-        "releaseStatus": "draft"
-      }
-    }
+  "preview": {
+    "distribution": "internal",
+    "android": {
+      "buildType": "apk"
+    },
+    "env": {
+      "EXPO_PUBLIC_ENV": "preview",
+      "EXPO_PUBLIC_API_URL": "https://bethel-ag-qvtu.onrender.com/api"
+    },
+    "channel": "preview"
+  },
+  "production": {
+    "distribution": "store",
+    "android": {
+      "buildType": "app-bundle"
+    },
+    "autoIncrement": true,
+    "env": {
+      "EXPO_PUBLIC_ENV": "production",
+      "EXPO_PUBLIC_API_URL": "https://bethel-ag-qvtu.onrender.com/api"
+    },
+    "channel": "production"
   }
 }

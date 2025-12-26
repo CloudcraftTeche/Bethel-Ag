@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Bethel AG ",
+    "name": "Bethel AG",
     "slug": "bethel-ag",
     "scheme": "bethelag",
     "version": "1.0.0",
@@ -12,7 +12,9 @@
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#1a1a2e",
     "primaryColor": "#667eea",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "jsEngine": "hermes",
     "plugins": [
       [
@@ -41,7 +43,9 @@
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
-        "UIRequiredDeviceCapabilities": ["armv7"],
+        "UIRequiredDeviceCapabilities": [
+          "armv7"
+        ],
         "NSCameraUsageDescription": "This app uses your camera to capture images for profile and content creation.",
         "NSPhotoLibraryUsageDescription": "This app uses your photo library to upload images.",
         "NSPhotoLibraryAddOnlyUsageDescription": "This app needs to save photos to your library.",
@@ -50,7 +54,10 @@
         "NSContactsUsageDescription": "This app uses your contacts to help you connect with others.",
         "NSUserTrackingUsageDescription": "This app uses tracking to provide you with a better experience.",
         "NSLocalNetworkUsageDescription": "This app uses local network to enhance your experience.",
-        "NSBonjourServiceTypes": ["_http._tcp", "_https._tcp"]
+        "NSBonjourServiceTypes": [
+          "_http._tcp",
+          "_https._tcp"
+        ]
       },
       "splash": {
         "backgroundColor": "#1a1a2e"
@@ -94,7 +101,10 @@
               "scheme": "bethelagdubai"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "splash": {
@@ -114,14 +124,14 @@
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/64902914-bc16-482a-8138-9998ff3a5762"
+      "url": "https://u.expo.dev/bbda3eb2-5866-4799-9cf1-7c29f383efde"
     },
     "description": "Bethel AG Dubai - A modern platform for community and commerce.",
     "extra": {
       "eas": {
-        "projectId": "64902914-bc16-482a-8138-9998ff3a5762"
+        "projectId": "bbda3eb2-5866-4799-9cf1-7c29f383efde"
       },
-      "apiUrl": "http://10.73.23.19:5000/api",
+      "apiUrl": "https://bethel-ag-qvtu.onrender.com/api",
       "appVersion": "1.0.0"
     },
     "owner": "johnsmatz"

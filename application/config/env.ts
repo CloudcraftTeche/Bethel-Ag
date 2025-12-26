@@ -8,13 +8,13 @@ const ENV = {
     enableDebugMode: true,
   },
   preview: {
-    apiUrl: 'https://bethel-ag-dubai.onrender.com/api', 
+    apiUrl: 'https://bethel-ag-qvtu.onrender.com/api', 
     env: 'preview',
     enableLogging: true,
     enableDebugMode: false,
   },
   production: {
-    apiUrl: 'https://bethel-ag-dubai.onrender.com/api', 
+    apiUrl: 'https://bethel-ag-qvtu.onrender.com/api', 
     env: 'production',
     enableLogging: false,
     enableDebugMode: false,
