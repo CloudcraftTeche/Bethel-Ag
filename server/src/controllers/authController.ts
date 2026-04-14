@@ -102,15 +102,16 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+
     if (email === "testuser@gmail.com" && password === "Test@123") {
       return res.json({
         token: jwt.sign(
-          { userId: "test-user-id", role: "user" },
+          { userId: "69de32272fe540add538d142", role: "user" },
           process.env.JWT_SECRET as string,
           { expiresIn: "30d" },
         ),
         user: {
-          _id: "test-user-id",
+          _id: "69de32272fe540add538d142",
           name: "Test User",
           email: "testuser@gmail.com",
           role: "user",
