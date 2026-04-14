@@ -4,34 +4,28 @@
     "appVersionSource": "remote"
   },
   "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENV": "preview",
+        "EXPO_PUBLIC_API_URL": "https://bethel-ag-qvtu.onrender.com/api"
+      },
+      "channel": "preview"
+    },
     "production": {
+      "distribution": "store",
       "android": {
         "buildType": "app-bundle"
       },
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://bethel-ag-qvtu.onrender.com/api"
+      },
+      "channel": "production"
     }
-  },
-  "preview": {
-    "distribution": "internal",
-    "android": {
-      "buildType": "apk"
-    },
-    "env": {
-      "EXPO_PUBLIC_ENV": "preview",
-      "EXPO_PUBLIC_API_URL": "https://bethel-ag-qvtu.onrender.com/api"
-    },
-    "channel": "preview"
-  },
-  "production": {
-    "distribution": "store",
-    "android": {
-      "buildType": "app-bundle"
-    },
-    "autoIncrement": true,
-    "env": {
-      "EXPO_PUBLIC_ENV": "production",
-      "EXPO_PUBLIC_API_URL": "https://bethel-ag-qvtu.onrender.com/api"
-    },
-    "channel": "production"
   }
 }
